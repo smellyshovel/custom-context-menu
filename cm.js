@@ -10,11 +10,11 @@ function ContextMenu(target, params) {
     this.listenToCMInvoked((event) => {
         // if user wants the overlay laying under the CM
         if (this.params.overlay) {
-            this.overlay = this.prepareOverlay();
+            this.prepareOverlay();
         }
 
-        var layoutElements = this.prepareLayout();
-        this.cm = this.prepareCM(layoutElements);
+        this.prepareLayoutItems();
+        this.prepareCM();
 
         var pos = this.calculatePosition(event);
         this.draw(pos);
@@ -50,60 +50,66 @@ ContextMenu.prototype.listenToCMClosed = function (callback) {
 };
 
 ContextMenu.prototype.prepareOverlay = function () {
-    var overlay = document.createElement("div");
-    overlay.dataset.overlayCm = "";
+    this.overlay = document.createElement("div");
+    this.overlay.dataset.overlayCm = "";
 
-    overlay.style.position = "absolute";
-    overlay.style.display = "block";
-    overlay.style.left = 0; overlay.style.top = 0;
-    overlay.style.width = document.documentElement.getBoundingClientRect().width + "px";
-    overlay.style.height = document.documentElement.getBoundingClientRect().height + "px";
-    overlay.style.visibility = "hidden";
+    this.overlay.style.position = "absolute";
+    this.overlay.style.display = "block";
+    this.overlay.style.left = 0; this.overlay.style.top = 0;
+    this.overlay.style.width = document.documentElement.getBoundingClientRect().width + "px";
+    this.overlay.style.height = document.documentElement.getBoundingClientRect().height + "px";
+    this.overlay.style.visibility = "hidden";
 
-    document.body.appendChild(overlay);
-    return overlay;
+    document.body.appendChild(this.overlay);
 };
 
-ContextMenu.prototype.prepareLayout = function () {
-    this.items = Object.keys(this.params.layout).map((item) => {
-        var text = document.createTextNode(item.toString()),
-            elem = document.createElement("div");
+ContextMenu.prototype.prepareLayoutItems = function () {
+    this.itemsToRender = this.params.items.map((item) => {
+        if (item === "divider") {
+            var node = document.createElement("div");
+            node.dataset.itemServiceCm = "divider";
 
-        elem.dataset.itemCm = this.params.id || "";
+            return node;
+        }
 
-        elem.appendChild(text);
+        var text = document.createTextNode(item.title),
+            node = document.createElement("div");
 
-        elem.addEventListener("mouseup", (event) => {
+        node.dataset.itemCm = this.params.id || "";
+        node.appendChild(text);
+
+        node.addEventListener("mouseup", (event) => {
             this.close();
-            this.params.layout[item.toString()]();
+            item.function();
         });
 
-        return elem;
+        return node;
     });
 
-    return this.items;
+    this.items = this.itemsToRender.filter((item) => {
+        return item.dataset.itemCm;
+    });
+
+    console.log(this.itemsToRender, this.items);
 };
 
-ContextMenu.prototype.prepareCM = function(layoutElements) {
-    var cm = document.createElement("div");
-    cm.dataset["cm"] = this.params.id || "";
+ContextMenu.prototype.prepareCM = function() {
+    this.cm = document.createElement("div");
+    this.cm.dataset["cm"] = this.params.id || "";
 
-    cm.style.position = "absolute";
-    cm.style.display = "block";
-    cm.style.visibility = "hidden";
+    this.cm.style.position = "absolute";
+    this.cm.style.display = "block";
+    this.cm.style.visibility = "hidden";
 
-    layoutElements.forEach((element) => {
-        cm.appendChild(element);
+    this.itemsToRender.forEach((item) => {
+        this.cm.appendChild(item);
     });
 
     if (this.params.overlay) {
-        this.overlay.appendChild(cm);
+        this.overlay.appendChild(this.cm);
     } else {
-        document.body.appendChild(cm);
+        document.body.appendChild(this.cm);
     }
-
-
-    return cm;
 };
 
 ContextMenu.prototype.draw = function (pos) {
