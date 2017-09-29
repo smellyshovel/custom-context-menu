@@ -42,8 +42,10 @@ ContextMenu.prototype.listenToCMInvoked = function (callback) {
 ContextMenu.prototype.listenToCMClosed = function (callback) {
     document.addEventListener("mousedown", (event) => {
         if (this.opened) {
-            if (!(~this.items.indexOf(event.target))) {
-                callback(event);
+            if ((this.overlay && this.params.noRecreate) ? event.which === 1 : true) {
+                if (!(~this.items.indexOf(event.target))) {
+                    callback(event);
+                }
             }
         }
     });
@@ -55,6 +57,17 @@ ContextMenu.prototype.listenToCMClosed = function (callback) {
             }
         }
     });
+
+    if (this.overlay && this.params.noRecreate) {
+        this.overlay.addEventListener("contextmenu", (event) => {
+                event.preventDefault();
+                event.stopPropagation();
+
+            if (!(~this.items.indexOf(event.target))) {
+                callback(event);
+            }
+        });
+    }
 };
 
 ContextMenu.prototype.prepareOverlay = function () {
