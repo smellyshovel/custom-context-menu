@@ -47,6 +47,14 @@ ContextMenu.prototype.listenToCMClosed = function (callback) {
             }
         }
     });
+
+    document.addEventListener("keydown", (event) => {
+        if (this.opened) {
+            if (event.keyCode === 27) {
+                callback(event);
+            }
+        }
+    });
 };
 
 ContextMenu.prototype.prepareOverlay = function () {
