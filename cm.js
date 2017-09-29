@@ -51,7 +51,7 @@ ContextMenu.prototype.listenToCMClosed = function (callback) {
 
 ContextMenu.prototype.prepareOverlay = function () {
     this.overlay = document.createElement("div");
-    this.overlay.dataset.overlayCm = "";
+    this.overlay.dataset.overlayCm = this.params.id || "";
 
     this.overlay.style.position = "absolute";
     this.overlay.style.display = "block";
@@ -87,10 +87,8 @@ ContextMenu.prototype.prepareLayoutItems = function () {
     });
 
     this.items = this.itemsToRender.filter((item) => {
-        return item.dataset.itemCm;
+        return item.dataset.hasOwnProperty("itemCm");
     });
-
-    console.log(this.itemsToRender, this.items);
 };
 
 ContextMenu.prototype.prepareCM = function() {
