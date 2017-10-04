@@ -23,51 +23,66 @@ function ContextMenu(target, params) {
             this.close();
         });
     });
-
-
 }
 
 ContextMenu.prototype.listenToCMInvoked = function (callback) {
-    var el = this.target.addEventListener("contextmenu", (event) => {
+    this.target.addEventListener("contextmenu", (event) => {
         event.preventDefault();
         event.stopPropagation();
 
-        // if CM is not disabled
-        if (!(this.params.disabled === true)) {
-            callback(event);
-        }
+        // if no items yet or not RMB on item
+        // if (!this.items || !(~this.items.indexOf(event.target))) {
+            // if CM is not disabled
+            if (!(this.params.disabled === true)) {
+                callback(event);
+            }
+        // }
     });
 };
 
 ContextMenu.prototype.listenToCMClosed = function (callback) {
-    document.addEventListener("mousedown", (event) => {
-        if (this.opened) {
-            if ((this.overlay && this.params.noRecreate) ? event.which === 1 : true) {
+    var noRecreate = this.overlay && this.params.noRecreate;
+
+    this.eventListeners = [
+        {
+            target: document,
+            event: "mousedown",
+            callback: (event) => {
+                if (noRecreate ? event.which !== 3 : true) {
+                    if (!(~this.items.indexOf(event.target))) {
+                        callback(event);
+                    }
+                }
+            }
+        },
+
+        {
+            target: this.overlay,
+            event: "contextmenu",
+            callback: (event) => {
+                event.preventDefault();
+                event.stopPropagation();
+
                 if (!(~this.items.indexOf(event.target))) {
                     callback(event);
                 }
             }
-        }
-    });
+        },
 
-    document.addEventListener("keydown", (event) => {
-        if (this.opened) {
-            if (event.keyCode === 27) {
-                callback(event);
+        {
+            target: document,
+            event: "keyup",
+            callback: (event) => {
+                if (event.keyCode === 27) {
+                    callback(event);
+                }
             }
         }
+    ];
+
+    this.eventListeners.forEach(function(eventListener) {
+        eventListener.target.addEventListener(eventListener.event, eventListener.callback);
     });
-
-    if (this.overlay && this.params.noRecreate) {
-        this.overlay.addEventListener("contextmenu", (event) => {
-                event.preventDefault();
-                event.stopPropagation();
-
-            if (!(~this.items.indexOf(event.target))) {
-                callback(event);
-            }
-        });
-    }
 };
 
 ContextMenu.prototype.prepareOverlay = function () {
@@ -145,6 +160,10 @@ ContextMenu.prototype.draw = function (pos) {
 
 ContextMenu.prototype.close = function() {
     console.log("Closing CM");
+
+    this.eventListeners.forEach(function(eventListener) {
+        eventListener.target.removeEventListener(eventListener.event, eventListener.callback);
+    });
 
     if (this.overlay) {
         this.overlay.remove();
