@@ -1,4 +1,5 @@
 function ContextMenu(target, params) {
+    // to prevent ContextMenu usage as a function (not as a constructor)
     if (!(this instanceof ContextMenu)) {
         return new ContextMenu(target, params);
     }
@@ -6,19 +7,22 @@ function ContextMenu(target, params) {
     this.target = target;
     this.params = params;
 
-
+    // listening to CM invoked and executing the callback function when it happened
     this.listenToCMInvoked((event) => {
         // if user wants the overlay laying under the CM
         if (this.params.overlay) {
             this.prepareOverlay();
         }
 
+        // drawing the CM with all the items, but making it "invisible" to the end user
         this.prepareLayoutItems();
         this.prepareCM();
 
+        // calculating the position of the real-one CM and making it visible
         var pos = this.calculatePosition(event);
         this.draw(pos);
 
+        // listening to CM closed and executing the callback function when it happened
         this.listenToCMClosed((event) => {
             this.close();
         });
@@ -27,27 +31,32 @@ function ContextMenu(target, params) {
 
 ContextMenu.prototype.listenToCMInvoked = function (callback) {
     this.target.addEventListener("contextmenu", (event) => {
-        event.preventDefault();
-        event.stopPropagation();
+        // if CM is not disabled
+        if (!(this.params.disabled === true)) {
+            // preventing default CM to appear
+            event.preventDefault();
+            /*
+                stop of the propagation is needed because if you have overlay
+                enabled then right click on the non-document CM's overlay will
+                open the document's CM even if the click happened on an element
+                that has it's own CM
+            */
+            event.stopPropagation();
 
-        // if no items yet or not RMB on item
-        // if (!this.items || !(~this.items.indexOf(event.target))) {
-            // if CM is not disabled
-            if (!(this.params.disabled === true)) {
-                callback(event);
-            }
-        // }
+            callback(event);
+        }
     });
 };
 
 ContextMenu.prototype.listenToCMClosed = function (callback) {
     var noRecreate = this.overlay && this.params.noRecreate;
 
-    this.eventListeners = [
+    // storing "closing" event listeners as an array to easily later removal
+    this.eventListenersToRemove = [
         {
-            target: document,
-            event: "mousedown",
-            callback: (event) => {
+            t: document,
+            e: "mousedown",
+            cb: (event) => {
                 if (noRecreate ? event.which !== 3 : true) {
                     if (!(~this.items.indexOf(event.target))) {
                         callback(event);
@@ -57,9 +66,9 @@ ContextMenu.prototype.listenToCMClosed = function (callback) {
         },
 
         {
-            target: this.overlay,
-            event: "contextmenu",
-            callback: (event) => {
+            t: this.overlay,
+            e: "contextmenu",
+            cb: (event) => {
                 event.preventDefault();
                 event.stopPropagation();
 
@@ -70,9 +79,9 @@ ContextMenu.prototype.listenToCMClosed = function (callback) {
         },
 
         {
-            target: document,
-            event: "keyup",
-            callback: (event) => {
+            t: document,
+            e: "keyup",
+            cb: (event) => {
                 if (event.keyCode === 27) {
                     callback(event);
                 }
@@ -80,26 +89,33 @@ ContextMenu.prototype.listenToCMClosed = function (callback) {
         }
     ];
 
-    this.eventListeners.forEach(function(eventListener) {
-        eventListener.target.addEventListener(eventListener.event, eventListener.callback);
+    // adding previously defined event listeners
+    this.eventListenersToRemove.forEach(function(eventListener) {
+        eventListener.t.addEventListener(eventListener.e, eventListener.cb);
     });
 };
 
 ContextMenu.prototype.prepareOverlay = function () {
+    // creating an overlay a.k.a container for the future CM
     this.overlay = document.createElement("div");
+    // addind data-overlay-cm for styling purposes
     this.overlay.dataset.overlayCm = this.params.id || "";
 
+    // necsessary styles
     this.overlay.style.position = "absolute";
     this.overlay.style.display = "block";
     this.overlay.style.left = 0; this.overlay.style.top = 0;
-    this.overlay.style.width = document.documentElement.getBoundingClientRect().width + "px";
+    this.overlay.style.width = document.documentElement.getBoundingClientRect().width + "px"; // TODO: doesn't work with horizontal scrollbar
     this.overlay.style.height = document.documentElement.getBoundingClientRect().height + "px";
     this.overlay.style.visibility = "hidden";
+    // TODO: z-index
 
+    // drawing overlay right in the body
     document.body.appendChild(this.overlay);
 };
 
 ContextMenu.prototype.prepareLayoutItems = function () {
+    // everything that should be rendered on the page
     this.itemsToRender = this.params.items.map((item) => {
         if (item === "divider") {
             var node = document.createElement("div");
@@ -108,12 +124,14 @@ ContextMenu.prototype.prepareLayoutItems = function () {
             return node;
         }
 
+        // TODO: make elements as li
         var text = document.createTextNode(item.title),
             node = document.createElement("div");
 
         node.dataset.itemCm = this.params.id || "";
         node.appendChild(text);
 
+        // when user releases mouse button on item
         node.addEventListener("mouseup", (event) => {
             this.close();
             item.function();
@@ -122,23 +140,30 @@ ContextMenu.prototype.prepareLayoutItems = function () {
         return node;
     });
 
+    // items that are actual buttons (not dividers or sort of)
     this.items = this.itemsToRender.filter((item) => {
         return item.dataset.hasOwnProperty("itemCm");
     });
 };
 
 ContextMenu.prototype.prepareCM = function() {
+    // creating the CM element
     this.cm = document.createElement("div");
+    // addind data-cm for styling purposes
     this.cm.dataset["cm"] = this.params.id || "";
 
+    // necsessary styles
     this.cm.style.position = "absolute";
     this.cm.style.display = "block";
     this.cm.style.visibility = "hidden";
+    // TODO: z-index
 
+    // rendering every item (including dividers)
     this.itemsToRender.forEach((item) => {
         this.cm.appendChild(item);
     });
 
+    // if we have the overlay then render CM in it else render right in the body
     if (this.params.overlay) {
         this.overlay.appendChild(this.cm);
     } else {
@@ -147,31 +172,29 @@ ContextMenu.prototype.prepareCM = function() {
 };
 
 ContextMenu.prototype.draw = function (pos) {
+    // make overlay visible if we have it
     if (this.overlay) {
         this.overlay.style.visibility = "visible";
     }
 
+    // make CM visible and set it's position
     this.cm.style.left = pos.x + "px";
     this.cm.style.top = pos.y + "px";
     this.cm.style.visibility = "visible";
-
-    this.opened = true;
 };
 
 ContextMenu.prototype.close = function() {
-    console.log("Closing CM");
-
-    this.eventListeners.forEach(function(eventListener) {
-        eventListener.target.removeEventListener(eventListener.event, eventListener.callback);
+    // removing all no-longer-needed event listeners to keep everything clean
+    this.eventListenersToRemove.forEach(function(eventListener) {
+        eventListener.t.removeEventListener(eventListener.e, eventListener.cb);
     });
 
+    // if we have the overlay then remove it else remove CM directly
     if (this.overlay) {
         this.overlay.remove();
     } else {
         this.cm.remove();
     }
-
-    this.opened = false;
 };
 
 ContextMenu.prototype.calculatePosition = function(event) {
