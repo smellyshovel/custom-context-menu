@@ -33,17 +33,22 @@ ContextMenu.prototype.listenToCMInvoked = function (callback) {
     this.target.addEventListener("contextmenu", (event) => {
         // if CM is not disabled
         if (!(this.params.disabled === true)) {
-            // preventing default CM to appear
-            event.preventDefault();
-            /*
-                stop of the propagation is needed because if you have overlay
-                enabled then right click on the non-document CM's overlay will
-                open the document's CM even if the click happened on an element
-                that has it's own CM
-            */
-            event.stopPropagation();
+            // defaultOnAlt enabled
+            var defaultOnAlt = ("defaultOnAlt" in this.params) ? this.params.defaultOnAlt : true;
 
-            callback(event);
+            if (defaultOnAlt ? event.altKey === false : true) {
+                // preventing default CM to appear
+                event.preventDefault();
+                /*
+                    stop of the propagation is needed because if you have overlay
+                    enabled then right click on the non-document CM's overlay will
+                    open the document's CM even if the click happened on an element
+                    that has it's own CM
+                */
+                event.stopPropagation();
+
+                callback(event);
+            }
         }
     });
 };
@@ -58,6 +63,7 @@ ContextMenu.prototype.listenToCMClosed = function (callback) {
             e: "mousedown",
             cb: (event) => {
                 if (noRecreate ? event.which !== 3 : true) {
+                    // if clicked not on item
                     if (!(~this.items.indexOf(event.target))) {
                         callback(event);
                     }
@@ -72,6 +78,7 @@ ContextMenu.prototype.listenToCMClosed = function (callback) {
                 event.preventDefault();
                 event.stopPropagation();
 
+                // if clicked not on item
                 if (!(~this.items.indexOf(event.target))) {
                     callback(event);
                 }
@@ -101,14 +108,19 @@ ContextMenu.prototype.prepareOverlay = function () {
     // addind data-overlay-cm for styling purposes
     this.overlay.dataset.overlayCm = this.params.id || "";
 
+    var left = document.documentElement.scrollLeft,
+        top = document.documentElement.scrollTop,
+        width = left + document.documentElement.clientWidth,
+        height = top + document.documentElement.clientHeight;
+
     // necsessary styles
     this.overlay.style.position = "absolute";
     this.overlay.style.display = "block";
-    this.overlay.style.left = 0; this.overlay.style.top = 0;
-    this.overlay.style.width = document.documentElement.getBoundingClientRect().width + "px"; // TODO: doesn't work with horizontal scrollbar
-    this.overlay.style.height = document.documentElement.getBoundingClientRect().height + "px";
+    this.overlay.style.left = left + "px"; this.overlay.style.top = top + "px";
+    this.overlay.style.width = width + "px";
+    this.overlay.style.height = height + "px";
     this.overlay.style.visibility = "hidden";
-    // TODO: z-index
+    this.overlay.style.zIndex = 2147483646;
 
     // drawing overlay right in the body
     document.body.appendChild(this.overlay);
@@ -124,9 +136,8 @@ ContextMenu.prototype.prepareLayoutItems = function () {
             return node;
         }
 
-        // TODO: make elements as li
         var text = document.createTextNode(item.title),
-            node = document.createElement("div");
+            node = document.createElement("li");
 
         node.dataset.itemCm = this.params.id || "";
         node.appendChild(text);
@@ -148,7 +159,7 @@ ContextMenu.prototype.prepareLayoutItems = function () {
 
 ContextMenu.prototype.prepareCM = function() {
     // creating the CM element
-    this.cm = document.createElement("div");
+    this.cm = document.createElement("ol");
     // addind data-cm for styling purposes
     this.cm.dataset["cm"] = this.params.id || "";
 
@@ -156,7 +167,7 @@ ContextMenu.prototype.prepareCM = function() {
     this.cm.style.position = "absolute";
     this.cm.style.display = "block";
     this.cm.style.visibility = "hidden";
-    // TODO: z-index
+    this.overlay.style.zIndex = 2147483647;
 
     // rendering every item (including dividers)
     this.itemsToRender.forEach((item) => {
