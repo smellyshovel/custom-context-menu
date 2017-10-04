@@ -108,15 +108,15 @@ ContextMenu.prototype.prepareOverlay = function () {
     // addind data-overlay-cm for styling purposes
     this.overlay.dataset.overlayCm = this.params.id || "";
 
-    var left = document.documentElement.scrollLeft,
-        top = document.documentElement.scrollTop,
-        width = left + document.documentElement.clientWidth,
-        height = top + document.documentElement.clientHeight;
+    var scrollLeft = document.documentElement.scrollLeft,
+        scrollTop = document.documentElement.scrollTop,
+        width = scrollLeft + document.documentElement.clientWidth,
+        height = scrollTop + document.documentElement.clientHeight;
 
     // necsessary styles
     this.overlay.style.position = "absolute";
     this.overlay.style.display = "block";
-    this.overlay.style.left = left + "px"; this.overlay.style.top = top + "px";
+    this.overlay.style.left = 0; this.overlay.style.top = 0;
     this.overlay.style.width = width + "px";
     this.overlay.style.height = height + "px";
     this.overlay.style.visibility = "hidden";
