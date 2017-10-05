@@ -174,8 +174,18 @@ ContextMenu.prototype.prepareLayoutItems = function () {
         node.appendChild(text);
 
         if (item.function instanceof ContextSubMenu) {
+            var subMenu;
+
             node.addEventListener("mouseenter", (event) => {
-                this.subMenues.push(item.function.init(this, node));
+                subMenu = item.function.init(this, node);
+                this.subMenues.push(subMenu);
+                subMenu.draw();
+            });
+
+            node.addEventListener("mouseleave", (event) => {
+                if (event.toElement !== subMenu.csm) {
+                    subMenu.close();
+                }
             });
         } else {
             // when user releases mouse button on item
@@ -303,8 +313,7 @@ ContextSubMenu.prototype.init = function(parent, callee) {
     this.prepareLayoutItems();
     this.prepareCSM();
 
-    var pos = this.calculatePosition(callee);
-    this.draw(pos);
+    this.calculatePosition(callee);
 
     return this;
 }
@@ -327,6 +336,7 @@ ContextSubMenu.prototype.prepareLayoutItems = function() {
 
         if (item.function instanceof ContextSubMenu) {
             node.addEventListener("mouseenter", (event) => {
+                // TODO: now only one nested CM
                 item.function.init(this, node);
             });
         } else {
@@ -363,14 +373,20 @@ ContextSubMenu.prototype.prepareCSM = function() {
         this.csm.appendChild(item);
     });
 
-    // render right in the body
-    document.body.appendChild(this.csm);
+    // TODO: z-index'es are: max in CSM, less in SM, less in overlay
+
+    // if parent has the overlay then render CSM in it else render right in the body
+    if (this.parent.overlay) {
+        this.parent.overlay.appendChild(this.csm);
+    } else {
+        document.body.appendChild(this.csm);
+    }
 }
 
-ContextSubMenu.prototype.draw = function(pos) {
+ContextSubMenu.prototype.draw = function() {
     // make CM visible and set it's position
-    this.csm.style.left = pos.x + "px";
-    this.csm.style.top = pos.y + "px";
+    this.csm.style.left = this.pos.x + "px";
+    this.csm.style.top = this.pos.y + "px";
     this.csm.style.visibility = "visible";
 }
 
@@ -382,5 +398,6 @@ ContextSubMenu.prototype.calculatePosition = function(li) {
     var liRight = li.getBoundingClientRect().right,
         liTop = li.getBoundingClientRect().top;
 
-    return {x: liRight, y: liTop};
+    this.pos = {x: liRight, y: liTop};
+    console.log(this.pos);
 }
