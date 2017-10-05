@@ -112,7 +112,7 @@ ContextMenu.prototype.listenToCMClosed = function (callback) {
             },
         ];
     }
-    
+
     this.eventListenersToRemove.push({
             t: document,
             e: "keydown",
