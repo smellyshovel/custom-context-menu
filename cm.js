@@ -13,6 +13,9 @@ function ContextMenu(target, params) {
     this.target = target;
     this.params = params;
 
+    // store Submenues
+    this.subMenues = [];
+
     // listening to CM invoked and executing the callback function when it happened
     this.listenToCMInvoked((event) => {
         // if user wants the overlay laying under the CM
@@ -170,11 +173,17 @@ ContextMenu.prototype.prepareLayoutItems = function () {
         node.dataset.itemCm = this.params.id || "";
         node.appendChild(text);
 
-        // when user releases mouse button on item
-        node.addEventListener("mouseup", (event) => {
-            this.close();
-            item.function();
-        });
+        if (item.function instanceof ContextSubMenu) {
+            node.addEventListener("mouseenter", (event) => {
+                this.subMenues.push(item.function.init(this, node));
+            });
+        } else {
+            // when user releases mouse button on item
+            node.addEventListener("mouseup", (event) => {
+                this.close();
+                item.function();
+            });
+        }
 
         return node;
     });
@@ -223,6 +232,11 @@ ContextMenu.prototype.draw = function (pos) {
 };
 
 ContextMenu.prototype.close = function() {
+    // remove all sub menues
+    this.subMenues.forEach((subMenu) => {
+        subMenu.close();
+    });
+
     // removing all no-longer-needed event listeners to keep everything clean
     this.eventListenersToRemove.forEach(function(eventListener) {
         eventListener.t.removeEventListener(eventListener.e, eventListener.cb);
@@ -272,3 +286,101 @@ ContextMenu.prototype.calculatePosition = function(event) {
 
     return pos;
 };
+
+function ContextSubMenu(params) {
+    if (!(this instanceof ContextSubMenu)) {
+        return new ContextSubMenu(params);
+    }
+
+    // TODO: restrict instances (like in parent)
+
+    this.params = params;
+}
+
+ContextSubMenu.prototype.init = function(parent, callee) {
+    this.parent = parent;
+
+    this.prepareLayoutItems();
+    this.prepareCSM();
+
+    var pos = this.calculatePosition(callee);
+    this.draw(pos);
+
+    return this;
+}
+
+ContextSubMenu.prototype.prepareLayoutItems = function() {
+    // everything that should be rendered on the page
+    this.itemsToRender = this.params.items.map((item) => {
+        if (item === "divider") {
+            var node = document.createElement("div");
+            node.dataset.itemServiceCm = "divider";
+
+            return node;
+        }
+
+        var text = document.createTextNode(item.title),
+            node = document.createElement("li");
+
+        node.dataset.itemCm = this.params.id || "";
+        node.appendChild(text);
+
+        if (item.function instanceof ContextSubMenu) {
+            node.addEventListener("mouseenter", (event) => {
+                item.function.init(this, node);
+            });
+        } else {
+            // when user releases mouse button on item
+            node.addEventListener("mouseup", (event) => {
+                this.close();
+                item.function();
+            });
+        }
+
+        return node;
+    });
+
+    // items that are actual buttons (not dividers or sort of)
+    this.items = this.itemsToRender.filter((item) => {
+        return item.dataset.hasOwnProperty("itemCm");
+    });
+}
+
+ContextSubMenu.prototype.prepareCSM = function() {
+    // creating the CSM element
+    this.csm = document.createElement("ol");
+    // addind data-cm for styling purposes
+    this.csm.dataset["cm"] = this.params.id || "";
+
+    // necsessary styles
+    this.csm.style.position = "absolute";
+    this.csm.style.display = "block";
+    this.csm.style.visibility = "hidden";
+    this.csm.style.zIndex = 2147483647;
+
+    // rendering every item (including dividers)
+    this.itemsToRender.forEach((item) => {
+        this.csm.appendChild(item);
+    });
+
+    // render right in the body
+    document.body.appendChild(this.csm);
+}
+
+ContextSubMenu.prototype.draw = function(pos) {
+    // make CM visible and set it's position
+    this.csm.style.left = pos.x + "px";
+    this.csm.style.top = pos.y + "px";
+    this.csm.style.visibility = "visible";
+}
+
+ContextSubMenu.prototype.close = function () {
+    this.csm.remove();
+};
+
+ContextSubMenu.prototype.calculatePosition = function(li) {
+    var liRight = li.getBoundingClientRect().right,
+        liTop = li.getBoundingClientRect().top;
+
+    return {x: liRight, y: liTop};
+}
