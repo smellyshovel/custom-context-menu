@@ -4,12 +4,20 @@ function ContextMenu(target, params) {
         return new ContextMenu(target, params);
     }
 
+    var alreadyDefined = ContextMenu._instances.find((i) => {
+        return i.target === target;
+    });
+
+    if (alreadyDefined) return alreadyDefined;
+
     this.target = target;
     this.params = params;
 
     // listening to CM invoked and executing the callback function when it happened
     this.listenToCMInvoked((event) => {
         // if user wants the overlay laying under the CM
+
+
         if (this.params.overlay) {
             this.prepareOverlay();
         }
@@ -27,7 +35,11 @@ function ContextMenu(target, params) {
             this.close();
         });
     });
+
+    ContextMenu._instances.push(this);
 }
+
+ContextMenu._instances = [];
 
 ContextMenu.prototype.listenToCMInvoked = function (callback) {
     this.target.addEventListener("contextmenu", (event) => {
@@ -57,44 +69,60 @@ ContextMenu.prototype.listenToCMClosed = function (callback) {
     var noRecreate = this.overlay && this.params.noRecreate;
 
     // storing "closing" event listeners as an array to easily later removal
-    this.eventListenersToRemove = [
-        {
-            t: document,
-            e: "mousedown",
-            cb: (event) => {
-                if (noRecreate ? event.which !== 3 : true) {
+    if (this.overlay) {
+        this.eventListenersToRemove = [
+            {
+                t: document,
+                e: "mousedown",
+                cb: (event) => {
+                    if (noRecreate ? event.which !== 3 : true) {
+                        // if clicked not on item
+                        if (!(~this.items.indexOf(event.target))) {
+                            callback(event);
+                        }
+                    }
+                }
+            },
+
+            {
+                t: this.overlay,
+                e: "contextmenu",
+                cb: (event) => {
+                    event.preventDefault();
+                    event.stopPropagation();
+
                     // if clicked not on item
                     if (!(~this.items.indexOf(event.target))) {
                         callback(event);
                     }
                 }
-            }
-        },
-
-        {
-            t: this.overlay,
-            e: "contextmenu",
-            cb: (event) => {
-                event.preventDefault();
-                event.stopPropagation();
-
-                // if clicked not on item
-                if (!(~this.items.indexOf(event.target))) {
-                    callback(event);
+            },
+        ];
+    } else {
+        this.eventListenersToRemove = [
+            {
+                t: document,
+                e: "mousedown",
+                cb: (event) => {
+                    // if clicked not on item
+                    if (!(~this.items.indexOf(event.target))) {
+                        callback(event);
+                    }
                 }
-            }
-        },
-
-        {
+            },
+        ];
+    }
+    
+    this.eventListenersToRemove.push({
             t: document,
-            e: "keyup",
+            e: "keydown",
             cb: (event) => {
                 if (event.keyCode === 27) {
                     callback(event);
                 }
             }
         }
-    ];
+    );
 
     // adding previously defined event listeners
     this.eventListenersToRemove.forEach(function(eventListener) {
@@ -167,7 +195,7 @@ ContextMenu.prototype.prepareCM = function() {
     this.cm.style.position = "absolute";
     this.cm.style.display = "block";
     this.cm.style.visibility = "hidden";
-    this.overlay.style.zIndex = 2147483647;
+    this.cm.style.zIndex = 2147483647;
 
     // rendering every item (including dividers)
     this.itemsToRender.forEach((item) => {
