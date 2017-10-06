@@ -175,11 +175,13 @@ ContextMenu.prototype.prepareLayoutItems = function () {
 
         if (item.function instanceof ContextSubMenu) {
             node.addEventListener("mouseenter", (event) => {
-                if (!this.openedCSM) {
-                    this.timer = setTimeout(() => {
+                this.timer = setTimeout(() => {
+                    console.log("enter");
+                    if (!this.openedCSM) {
                         this.openedCSM = item.function.init(this, node);
-                    }, 1000);
-                }
+                    }
+                }, 1000);
+
             });
 
             node.addEventListener("mousedown", (event) => {
@@ -330,7 +332,9 @@ ContextSubMenu.prototype.init = function(parent, callee) {
     this.draw();
 
     this.listenToCSMClosed((event) => {
-        this.close();
+        if (this.parent.openedCSM) {
+            this.close();
+        }
     });
 
     return this;
@@ -415,8 +419,15 @@ ContextSubMenu.prototype.close = function () {
 };
 
 ContextSubMenu.prototype.listenToCSMClosed = function (callback) {
-    this.parent.items.forEach((item) => {
+    // TODO: param: don't close when mouse inters devider
+    var itemsWithoutCallee = this.parent.items.filter((item) => {
+        return item !== this.callee;
+    });
 
+    itemsWithoutCallee.forEach((item) => {
+        item.addEventListener("mouseenter", (event) => {
+            callback(event);
+        });
     });
 };
 
