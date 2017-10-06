@@ -174,18 +174,24 @@ ContextMenu.prototype.prepareLayoutItems = function () {
         node.appendChild(text);
 
         if (item.function instanceof ContextSubMenu) {
-            var subMenu;
+            var timer;
 
             node.addEventListener("mouseenter", (event) => {
-                subMenu = item.function.init(this, node);
-                this.subMenues.push(subMenu);
-                subMenu.draw();
+                timer = setTimeout(() => {
+                    this.openedCSM = item.function.init(this, node);
+                }, 1000);
+            });
+
+            node.addEventListener("mousedown", (event) => {
+                clearTimeout(timer);
+
+                if (!this.openedCSM) {
+                    this.openedCSM = item.function.init(this, node);
+                }
             });
 
             node.addEventListener("mouseleave", (event) => {
-                if (event.toElement !== subMenu.csm) {
-                    subMenu.close();
-                }
+                clearTimeout(timer);
             });
         } else {
             // when user releases mouse button on item
@@ -309,11 +315,17 @@ function ContextSubMenu(params) {
 
 ContextSubMenu.prototype.init = function(parent, callee) {
     this.parent = parent;
+    this.callee = callee;
 
     this.prepareLayoutItems();
     this.prepareCSM();
 
     this.calculatePosition(callee);
+    this.draw();
+
+    this.listenToCSMClosed((event) => {
+        this.close();
+    });
 
     return this;
 }
@@ -388,10 +400,32 @@ ContextSubMenu.prototype.draw = function() {
     this.csm.style.left = this.pos.x + "px";
     this.csm.style.top = this.pos.y + "px";
     this.csm.style.visibility = "visible";
+
+    this.opened = true;
 }
 
 ContextSubMenu.prototype.close = function () {
     this.csm.remove();
+    this.opened = false;
+};
+
+ContextSubMenu.prototype.listenToCSMClosed = function (callback) {
+    this.parent.items.forEach((item) => {
+        item.addEventListener("mouseenter", (event) => {
+            var timer;
+
+            if (event.target === this.callee) { // to the invoker
+                console.log("callee");
+                clearTimeout(timer);
+            } else {
+                if (!timer) {
+                    timer = setTimeout(() => {
+                        callback(event);
+                    }, 1000);
+                }
+            }
+        });
+    });
 };
 
 ContextSubMenu.prototype.calculatePosition = function(li) {
