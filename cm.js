@@ -174,16 +174,16 @@ ContextMenu.prototype.prepareLayoutItems = function () {
         node.appendChild(text);
 
         if (item.function instanceof ContextSubMenu) {
-            var timer;
-
             node.addEventListener("mouseenter", (event) => {
-                timer = setTimeout(() => {
-                    this.openedCSM = item.function.init(this, node);
-                }, 1000);
+                if (!this.openedCSM) {
+                    this.timer = setTimeout(() => {
+                        this.openedCSM = item.function.init(this, node);
+                    }, 1000);
+                }
             });
 
             node.addEventListener("mousedown", (event) => {
-                clearTimeout(timer);
+                clearTimeout(this.timer);
 
                 if (!this.openedCSM) {
                     this.openedCSM = item.function.init(this, node);
@@ -191,7 +191,7 @@ ContextMenu.prototype.prepareLayoutItems = function () {
             });
 
             node.addEventListener("mouseleave", (event) => {
-                clearTimeout(timer);
+                clearTimeout(this.timer);
             });
         } else {
             // when user releases mouse button on item
@@ -248,10 +248,16 @@ ContextMenu.prototype.draw = function (pos) {
 };
 
 ContextMenu.prototype.close = function() {
-    // remove all sub menues
-    this.subMenues.forEach((subMenu) => {
-        subMenu.close();
-    });
+    // close opened CSM if any
+    // TODO: delete this.subMenues
+    if (this.openedCSM) {
+        this.openedCSM.close();
+    }
+
+    // clear timeout if we have YET unopened CSM
+    if (this.timer) {
+        clearTimeout(this.timer);
+    }
 
     // removing all no-longer-needed event listeners to keep everything clean
     this.eventListenersToRemove.forEach(function(eventListener) {
@@ -400,31 +406,17 @@ ContextSubMenu.prototype.draw = function() {
     this.csm.style.left = this.pos.x + "px";
     this.csm.style.top = this.pos.y + "px";
     this.csm.style.visibility = "visible";
-
-    this.opened = true;
 }
 
 ContextSubMenu.prototype.close = function () {
+    console.log("Closing CSM");
     this.csm.remove();
-    this.opened = false;
+    this.parent.openedCSM = null;
 };
 
 ContextSubMenu.prototype.listenToCSMClosed = function (callback) {
     this.parent.items.forEach((item) => {
-        item.addEventListener("mouseenter", (event) => {
-            var timer;
 
-            if (event.target === this.callee) { // to the invoker
-                console.log("callee");
-                clearTimeout(timer);
-            } else {
-                if (!timer) {
-                    timer = setTimeout(() => {
-                        callback(event);
-                    }, 1000);
-                }
-            }
-        });
     });
 };
 
