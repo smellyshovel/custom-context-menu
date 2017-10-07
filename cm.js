@@ -176,12 +176,18 @@ ContextMenu.prototype.prepareLayoutItems = function () {
         if (item.function instanceof ContextSubMenu) {
             node.addEventListener("mouseenter", (event) => {
                 this.timer = setTimeout(() => {
-                    console.log("enter");
                     if (!this.openedCSM) {
                         this.openedCSM = item.function.init(this, node);
+                    } else if (this.openedCSM !== item.function) {
+                        this.openedCSM.close();
+                        console.log(this.openedCSM);
+                        this.openedCSM = item.function.init(this, node);
                     }
-                }, 1000);
+                }, item.function.params.delay.open * 1000); // TODO: if nothing given
+            });
 
+            node.addEventListener("mouseleave", (event) => {
+                clearTimeout(this.timer);
             });
 
             node.addEventListener("mousedown", (event) => {
@@ -189,11 +195,11 @@ ContextMenu.prototype.prepareLayoutItems = function () {
 
                 if (!this.openedCSM) {
                     this.openedCSM = item.function.init(this, node);
+                } else if (this.openedCSM !== item.function) {
+                    this.openedCSM.close();
+                    console.log(this.openedCSM);
+                    this.openedCSM = item.function.init(this, node);
                 }
-            });
-
-            node.addEventListener("mouseleave", (event) => {
-                clearTimeout(this.timer);
             });
         } else {
             // when user releases mouse button on item
@@ -414,23 +420,49 @@ ContextSubMenu.prototype.draw = function() {
 
 ContextSubMenu.prototype.close = function () {
     console.log("Closing CSM");
+    this.eventListenersToRemove.forEach((eventListener) => {
+        eventListener.t.removeEventListener(eventListener.e, eventListener.f);
+    });
+
+    if (this.timer) {
+        clearTimeout(this.timer);
+    }
+
     this.csm.remove();
     this.parent.openedCSM = null;
 };
 
 ContextSubMenu.prototype.listenToCSMClosed = function (callback) {
     // TODO: param: don't close when mouse inters devider
-    var itemsWithoutCallee = this.parent.items.filter((item) => {
-        return item !== this.callee;
-    });
 
-    itemsWithoutCallee.forEach((item) => {
-        item.addEventListener("mouseenter", (event) => {
-            callback(event);
-        });
+    this.eventListenersToRemove = [
+        {
+            t: this.callee,
+            e: "mouseleave",
+            f: (event) => {
+                if (this.parent.itemsToRender.indexOf(event.toElement) !== -1) {
+                    this.timer = setTimeout(() => {
+                        callback(event);
+                    }, this.params.delay.close * 1000); // TODO: if nothing given
+                }
+            }
+        },
+
+        {
+            t: this.callee,
+            e: "mouseenter",
+            f: (event) => {
+                clearTimeout(this.timer);
+            }
+        }
+    ];
+
+    this.eventListenersToRemove.forEach((eventListener) => {
+        eventListener.t.addEventListener(eventListener.e, eventListener.f);
     });
 };
-
+// TODO: add class "invisible" and "visible" to 2 states corresponsively
+// to easily adding "appending"-animations later
 ContextSubMenu.prototype.calculatePosition = function(li) {
     var liRight = li.getBoundingClientRect().right,
         liTop = li.getBoundingClientRect().top;
