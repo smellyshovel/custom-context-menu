@@ -460,7 +460,9 @@ ContextSubMenu.prototype.close = function () {
     }
 
     this.eventListenersToRemove.forEach((eventListener) => {
-        eventListener.t.removeEventListener(eventListener.e, eventListener.f);
+        eventListener.t.forEach((target) => {
+            target.removeEventListener(eventListener.e, eventListener.f);
+        });
     });
 
     this.csm.remove();
@@ -470,30 +472,38 @@ ContextSubMenu.prototype.close = function () {
 ContextSubMenu.prototype.listenToCSMClosed = function (callback) {
     // TODO: param: don't close when mouse inters devider
 
+    var nItems = this.parent.items.filter((item) => {
+        return item !== this.callee;
+    });
+
     this.eventListenersToRemove = [
         {
-            t: this.callee,
-            e: "mouseleave",
+            t: nItems,
+            e: "mouseenter",
             f: (event) => {
-                if (this.parent.itemsToRender.indexOf(event.toElement) !== -1) {
+                // if (nItems.indexOf(event.toElement) !== -1) {
                     this.timer = setTimeout(() => {
                         callback(event);
                     }, this.params.delay.close * 1000); // TODO: if nothing given
-                }
+                // }
             }
         },
 
         {
-            t: this.callee,
+            t: [this.callee],
             e: "mouseenter",
             f: (event) => {
-                clearTimeout(this.timer);
+                if (this.timer) {
+                    clearTimeout(this.timer);
+                }
             }
         }
     ];
 
     this.eventListenersToRemove.forEach((eventListener) => {
-        eventListener.t.addEventListener(eventListener.e, eventListener.f);
+        eventListener.t.forEach((target) => {
+            target.addEventListener(eventListener.e, eventListener.f);
+        });
     });
 };
 // TODO: add class "invisible" and "visible" to 2 states corresponsively
