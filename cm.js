@@ -397,7 +397,11 @@ ContextSubMenu.prototype.prepareLayoutItems = function() {
             // when user releases mouse button on item
             node.addEventListener("mouseup", (event) => {
                 // TODO: not pearent, but "the furthest" parent
-                this.parent.close();
+                var parent = this.parent;
+                while("parent" in parent) {
+                    parent = parent.parent;
+                }
+                parent.close();
                 item.function();
             });
         }
