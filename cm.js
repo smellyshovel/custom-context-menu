@@ -499,9 +499,31 @@ ContextSubMenu.prototype.listenToCSMClosed = function (callback) {
 // TODO: add class "invisible" and "visible" to 2 states corresponsively
 // to easily adding "appending"-animations later
 ContextSubMenu.prototype.calculatePosition = function(li) {
-    var liRight = li.getBoundingClientRect().right,
-        liTop = li.getBoundingClientRect().top;
+    var viewportWidth = document.documentElement.clientWidth,
+        viewportHeight = document.documentElement.clientHeight,
 
-    this.pos = {x: liRight, y: liTop};
-    console.log(this.pos);
+        liTop = li.getBoundingClientRect().top,
+        liBottom = li.getBoundingClientRect().bottom,
+        liLeft = li.getBoundingClientRect().left,
+        liRight = li.getBoundingClientRect().right,
+
+        csmWidth = this.csm.getBoundingClientRect().width,
+        csmHeight = this.csm.getBoundingClientRect().height,
+
+        furthestX = liRight + csmWidth,
+        furthestY = liTop + csmHeight,
+
+        pos = {x: liRight, y: liTop};
+
+        if (furthestX > viewportWidth) {
+            pos.x = liLeft - csmWidth;
+        }
+
+        if (furthestY > viewportHeight) {
+            pos.y = liBottom - csmHeight;
+        }
+
+        console.log(this.pos);
+        this.pos = pos;
+        return pos;
 }
