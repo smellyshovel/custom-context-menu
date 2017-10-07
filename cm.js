@@ -367,12 +367,36 @@ ContextSubMenu.prototype.prepareLayoutItems = function() {
 
         if (item.function instanceof ContextSubMenu) {
             node.addEventListener("mouseenter", (event) => {
-                // TODO: now only one nested CM
-                item.function.init(this, node);
+                this.timer = setTimeout(() => {
+                    if (!this.openedCSM) {
+                        this.openedCSM = item.function.init(this, node);
+                    } else if (this.openedCSM !== item.function) {
+                        this.openedCSM.close();
+                        console.log(this.openedCSM);
+                        this.openedCSM = item.function.init(this, node);
+                    }
+                }, item.function.params.delay.open * 1000); // TODO: if nothing given
+            });
+
+            node.addEventListener("mouseleave", (event) => {
+                clearTimeout(this.timer);
+            });
+
+            node.addEventListener("mousedown", (event) => {
+                clearTimeout(this.timer);
+
+                if (!this.openedCSM) {
+                    this.openedCSM = item.function.init(this, node);
+                } else if (this.openedCSM !== item.function) {
+                    this.openedCSM.close();
+                    console.log(this.openedCSM);
+                    this.openedCSM = item.function.init(this, node);
+                }
             });
         } else {
             // when user releases mouse button on item
             node.addEventListener("mouseup", (event) => {
+                // TODO: not pearent, but "the furthest" parent
                 this.parent.close();
                 item.function();
             });
@@ -423,13 +447,17 @@ ContextSubMenu.prototype.draw = function() {
 
 ContextSubMenu.prototype.close = function () {
     console.log("Closing CSM");
-    this.eventListenersToRemove.forEach((eventListener) => {
-        eventListener.t.removeEventListener(eventListener.e, eventListener.f);
-    });
+    if (this.openedCSM) {
+        this.openedCSM.close();
+    }
 
     if (this.timer) {
         clearTimeout(this.timer);
     }
+
+    this.eventListenersToRemove.forEach((eventListener) => {
+        eventListener.t.removeEventListener(eventListener.e, eventListener.f);
+    });
 
     this.csm.remove();
     this.parent.openedCSM = null;
