@@ -80,7 +80,8 @@ ContextMenu.prototype.listenToCMClosed = function (callback) {
                 cb: (event) => {
                     if (noRecreate ? event.which !== 3 : true) {
                         // if clicked not on item
-                        if (!(~this.items.indexOf(event.target))) {
+                        var items = [].slice.call(document.querySelectorAll("[data-item-cm]"));
+                        if (!(~items.indexOf(event.target))) {
                             callback(event);
                         }
                     }
@@ -95,7 +96,8 @@ ContextMenu.prototype.listenToCMClosed = function (callback) {
                     event.stopPropagation();
 
                     // if clicked not on item
-                    if (!(~this.items.indexOf(event.target))) {
+                    var items = [].slice.call(document.querySelectorAll("[data-item-cm]"));
+                    if (!(~items.indexOf(event.target))) {
                         callback(event);
                     }
                 }
@@ -108,7 +110,8 @@ ContextMenu.prototype.listenToCMClosed = function (callback) {
                 e: "mousedown",
                 cb: (event) => {
                     // if clicked not on item
-                    if (!(~this.items.indexOf(event.target))) {
+                    var items = [].slice.call(document.querySelectorAll("[data-item-cm]"));
+                    if (!(~items.indexOf(event.target))) {
                         callback(event);
                     }
                 }
@@ -370,7 +373,7 @@ ContextSubMenu.prototype.prepareLayoutItems = function() {
         } else {
             // when user releases mouse button on item
             node.addEventListener("mouseup", (event) => {
-                this.close();
+                this.parent.close();
                 item.function();
             });
         }
