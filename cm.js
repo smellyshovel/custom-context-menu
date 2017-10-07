@@ -460,9 +460,7 @@ ContextSubMenu.prototype.close = function () {
     }
 
     this.eventListenersToRemove.forEach((eventListener) => {
-        eventListener.t.forEach((target) => {
-            target.removeEventListener(eventListener.e, eventListener.f);
-        });
+        eventListener.t.removeEventListener(eventListener.e, eventListener.f);
     });
 
     this.csm.remove();
@@ -478,19 +476,37 @@ ContextSubMenu.prototype.listenToCSMClosed = function (callback) {
 
     this.eventListenersToRemove = [
         {
-            t: nItems,
-            e: "mouseenter",
+            t: this.callee,
+            e: "mouseleave",
             f: (event) => {
-                // if (nItems.indexOf(event.toElement) !== -1) {
-                    this.timer = setTimeout(() => {
-                        callback(event);
-                    }, this.params.delay.close * 1000); // TODO: if nothing given
-                // }
+                this.timer = setTimeout(() => {
+                    callback(event);
+                }, this.params.delay.close * 1000); // TODO: if nothing given
             }
         },
 
         {
-            t: [this.callee],
+            t: this.csm,
+            e: "mouseleave",
+            f: (event) => {
+                this.timer = setTimeout(() => {
+                    callback(event);
+                }, this.params.delay.close * 1000); // TODO: if nothing given
+            }
+        },
+
+        {
+            t: this.callee,
+            e: "mouseenter",
+            f: (event) => {
+                if (this.timer) {
+                    clearTimeout(this.timer);
+                }
+            }
+        },
+
+        {
+            t: this.csm,
             e: "mouseenter",
             f: (event) => {
                 if (this.timer) {
@@ -498,12 +514,11 @@ ContextSubMenu.prototype.listenToCSMClosed = function (callback) {
                 }
             }
         }
+
     ];
 
     this.eventListenersToRemove.forEach((eventListener) => {
-        eventListener.t.forEach((target) => {
-            target.addEventListener(eventListener.e, eventListener.f);
-        });
+        eventListener.t.addEventListener(eventListener.e, eventListener.f);
     });
 };
 // TODO: add class "invisible" and "visible" to 2 states corresponsively
