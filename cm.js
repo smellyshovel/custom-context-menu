@@ -442,8 +442,12 @@ ContextSubMenu.prototype.prepareCSM = function() {
     });
 
     // if parent has the overlay then render CSM in it else render right in the body
-    if (this.parent.overlay) {
-        this.parent.overlay.appendChild(this.cm);
+    var parent = this.parent;
+    while("parent" in parent) {
+        parent = parent.parent;
+    }
+    if (parent.overlay) {
+        parent.overlay.appendChild(this.cm);
     } else {
         document.body.appendChild(this.cm);
     }
