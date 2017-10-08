@@ -42,6 +42,10 @@ function ContextMenu(target, params) {
 ContextMenu._instances = [];
 
 ContextMenu.prototype.listenToCMInvoked = function (callback) {
+    var getItems = function() {
+        return [].slice.call(document.querySelectorAll("[data-item-cm]"));
+    };
+
     this.target.addEventListener("contextmenu", (event) => {
         // if CM is not disabled
         if (!(this.params.disabled === true)) {
@@ -59,7 +63,10 @@ ContextMenu.prototype.listenToCMInvoked = function (callback) {
                 */
                 event.stopPropagation();
 
-                callback(event);
+                // bug #1 (created document CM if rightclicked on non-document cm's item)
+                if (getItems().indexOf(event.target) === -1) {
+                    callback(event);
+                }
             }
         }
     });
@@ -99,7 +106,7 @@ ContextMenu.prototype.listenToCMClosed = function (callback) {
                         callback(event);
                     }
                 }
-            },
+            }
         ];
     } else {
         this.eventListenersToRemove = [
@@ -112,7 +119,7 @@ ContextMenu.prototype.listenToCMClosed = function (callback) {
                         callback(event);
                     }
                 }
-            },
+            }
         ];
     }
 
