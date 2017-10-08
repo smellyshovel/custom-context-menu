@@ -335,6 +335,13 @@ function ContextSubMenu(params) {
 
 ContextSubMenu.prototype.init = function(parent, callee) {
     this.parent = parent;
+    this.root = (() => {
+        var parent = this.parent;
+        while("parent" in parent) {
+            parent = parent.parent;
+        }
+        return parent;
+    })();
     this.callee = callee;
 
     this.itemsNotSubMenuInvokers = [];
@@ -404,11 +411,7 @@ ContextSubMenu.prototype.prepareLayoutItems = function() {
 
             // when user releases mouse button on item
             node.addEventListener("mouseup", (event) => {
-                var parent = this.parent;
-                while("parent" in parent) {
-                    parent = parent.parent;
-                }
-                parent.close();
+                this.root.close();
                 item.function();
             });
         }
@@ -441,13 +444,9 @@ ContextSubMenu.prototype.prepareCSM = function() {
         this.cm.appendChild(item);
     });
 
-    // if parent has the overlay then render CSM in it else render right in the body
-    var parent = this.parent;
-    while("parent" in parent) {
-        parent = parent.parent;
-    }
-    if (parent.overlay) {
-        parent.overlay.appendChild(this.cm);
+    // if root has the overlay then render CSM in it else render right in the body
+    if (this.root.overlay) {
+        this.root.overlay.appendChild(this.cm);
     } else {
         document.body.appendChild(this.cm);
     }
