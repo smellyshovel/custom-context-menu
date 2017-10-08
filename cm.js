@@ -66,7 +66,10 @@ ContextMenu.prototype.listenToCMInvoked = function (callback) {
 };
 
 ContextMenu.prototype.listenToCMClosed = function (callback) {
-    var noRecreate = this.overlay && this.params.noRecreate;
+    var noRecreate = this.overlay && this.params.noRecreate,
+        getItems = function() {
+            return [].slice.call(document.querySelectorAll("[data-item-cm]"));
+        };
 
     // storing "closing" event listeners as an array to easily later removal
     if (this.overlay) {
@@ -77,8 +80,7 @@ ContextMenu.prototype.listenToCMClosed = function (callback) {
                 cb: (event) => {
                     if (noRecreate ? event.which !== 3 : true) {
                         // if clicked not on item
-                        var items = [].slice.call(document.querySelectorAll("[data-item-cm]"));
-                        if (!(~items.indexOf(event.target))) {
+                        if (getItems().indexOf(event.target) === -1) {
                             callback(event);
                         }
                     }
@@ -93,8 +95,7 @@ ContextMenu.prototype.listenToCMClosed = function (callback) {
                     event.stopPropagation();
 
                     // if clicked not on item
-                    var items = [].slice.call(document.querySelectorAll("[data-item-cm]"));
-                    if (!(~items.indexOf(event.target))) {
+                    if (getItems().indexOf(event.target) === -1) {
                         callback(event);
                     }
                 }
@@ -107,8 +108,7 @@ ContextMenu.prototype.listenToCMClosed = function (callback) {
                 e: "mousedown",
                 cb: (event) => {
                     // if clicked not on item
-                    var items = [].slice.call(document.querySelectorAll("[data-item-cm]"));
-                    if (!(~items.indexOf(event.target))) {
+                    if (getItems().indexOf(event.target) === -1) {
                         callback(event);
                     }
                 }
