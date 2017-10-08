@@ -13,8 +13,6 @@ function ContextMenu(target, params) {
     this.target = target;
     this.params = params;
 
-    this.itemsNotSubMenuInvokers = [];
-
     // listening to CM invoked and executing the callback function when it happened
     this.listenToCMInvoked((event) => {
         // if user wants the overlay laying under the CM
@@ -205,9 +203,6 @@ ContextMenu.prototype.prepareLayoutItems = function () {
                 }
             });
         } else {
-            // TODO: delete if not used
-            this.itemsNotSubMenuInvokers.push(node);
-
             // when user releases mouse button on item
             node.addEventListener("mouseup", (event) => {
                 this.close();
@@ -344,8 +339,6 @@ ContextSubMenu.prototype.init = function(parent, callee) {
     })();
     this.callee = callee;
 
-    this.itemsNotSubMenuInvokers = [];
-
     this.prepareLayoutItems();
     this.prepareCSM();
 
@@ -407,8 +400,6 @@ ContextSubMenu.prototype.prepareLayoutItems = function() {
                 }
             });
         } else {
-            this.itemsNotSubMenuInvokers.push(node);
-
             // when user releases mouse button on item
             node.addEventListener("mouseup", (event) => {
                 this.root.close();
