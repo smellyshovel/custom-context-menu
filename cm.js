@@ -444,9 +444,7 @@ ContextSubMenu.prototype.listenToCSMClosed = function(callback) {
             t: this.callee,
             e: "mouseleave",
             f: (event) => {
-                console.log("Will be closed");
                 this.closeTimer = setTimeout(() => {
-                    console.log("CLOSING...");
                     callback(event);
                 }, closeDelay);
             }
@@ -456,7 +454,6 @@ ContextSubMenu.prototype.listenToCSMClosed = function(callback) {
             t: this.callee,
             e: "mouseenter",
             f: (event) => {
-                console.log("CANCEL");
                 clearTimeout(this.closeTimer);
             }
         },
@@ -470,16 +467,12 @@ ContextSubMenu.prototype.listenToCSMClosed = function(callback) {
                 if (this.openedCSM) {
                     // and if mouse leaved somwhere not to it's CSM
                     if (event.toElement !== this.openedCSM.cm) {
-                        console.log("Will be closed");
                         this.closeTimer = setTimeout(() => {
-                            console.log("CLOSING...");
                             callback(event);
                         }, closeDelay);
                     }
                 } else {
-                    console.log("Will be closed");
                     this.closeTimer = setTimeout(() => {
-                        console.log("CLOSING...");
                         callback(event);
                     }, closeDelay);
                 }
@@ -490,7 +483,6 @@ ContextSubMenu.prototype.listenToCSMClosed = function(callback) {
             t: this.cm,
             e: "mouseenter",
             f: (event) => {
-                console.log("CANCEL");
                 clearTimeout(this.closeTimer);
             }
         }
