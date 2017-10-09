@@ -42,20 +42,13 @@ function ContextMenu(target, params) {
 
 ContextMenu._instances = [];
 
-ContextMenu.prototype.isRoot = function() {
-    return !("parent" in this);
-}
-
 ContextMenu.prototype.getRoot = function() {
-    if (!this.isRoot()) {
-          var parent = this.parent;
-          while("parent" in parent) {
-              parent = parent.parent;
-          }
-          return parent;
+      var parent = this;
+      while("parent" in parent) {
+          parent = parent.parent;
       }
 
-      return this;
+      return parent;
 };
 
 ContextMenu.prototype.listenToCMInvoked = function (callback) {
