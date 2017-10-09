@@ -84,9 +84,10 @@ ContextMenu.prototype.listenToCMInvoked = function(callback) {
 };
 
 ContextMenu.prototype.listenToCMClosed = function(callback) {
-    var noRecreate = this.overlay && this.params.noRecreate;
+    // allow using noRecreate param only for CMs with overlay
+    var noRecreate = this.params.overlay && this.params.noRecreate;
 
-    // storing "closing" event listeners as an array to easily later removal
+    // store close event listeners as an array to easily remove them in #close()
     if (this.overlay) {
         this.eventListenersToRemove = [
             {
@@ -131,6 +132,7 @@ ContextMenu.prototype.listenToCMClosed = function(callback) {
         ];
     }
 
+    // add keydown event either the CM has an overlay or not
     this.eventListenersToRemove.push({
             t: document,
             e: "keydown",
@@ -142,7 +144,7 @@ ContextMenu.prototype.listenToCMClosed = function(callback) {
         }
     );
 
-    // adding previously defined event listeners
+    // add previously defined event listeners
     this.eventListenersToRemove.forEach(function(eventListener) {
         eventListener.t.addEventListener(eventListener.e, eventListener.cb);
     });
