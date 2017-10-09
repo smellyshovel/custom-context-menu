@@ -403,22 +403,25 @@ ContextSubMenu.prototype.init = function(parent, callee) {
 }
 
 ContextSubMenu.prototype.close = function(triggeredByRoot) {
+    // all the "clearing" stuff before close
     ContextMenu.prototype.prepareForClose.call(this);
 
-    // if close was triggered in the root CM, then we don't want to wait until transition ends
+    // close CSM immidiatly if close was triggered by the root CM (specifically
+    // the root CM close)
     if (triggeredByRoot) {
         this.cm.remove();
     } else {
         // if close was triggered by for exmaple mouseleave on CSM, then
         // we should check whether this CSM has transition property or not
-        // if it does then we remove it right after the transition is done
+        // if it does then we remove the CSM right after the transition is over
         // if it doesn't then we remove it right on the way. This check is
-        // necsessary, because the transitionend
-        // event simply doesn't work if no transition provided (or it's)
-        // duration equals zero.
+        // necsessary, because the transitionend event simply won't work if no
+        // transition provided (or it's duration equals zero).
         var transition = parseInt((getComputedStyle(this.cm)).transitionDuration) > 0;
         if (transition) {
+            // add className for css transitions and animations
             this.cm.className = "invisible";
+
             this.cm.addEventListener("transitionend", (event) => {
                 this.cm.remove();
             });
@@ -427,6 +430,7 @@ ContextSubMenu.prototype.close = function(triggeredByRoot) {
         }
     }
 
+    // tell the parent CM/CSM that it no longer have the opened CSM
     this.parent.openedCSM = null;
 };
 
