@@ -1,42 +1,45 @@
 function ContextMenu(target, params) {
-    // to prevent ContextMenu usage as a function (not as a constructor)
+    // prevent ContextMenu to be used as a function (not as a constructor)
     if (!(this instanceof ContextMenu)) {
         return new ContextMenu(target, params);
     }
 
-    var alreadyDefined = ContextMenu._instances.find((i) => {
-        return i.target === target;
+    // search for CM already defined for this target
+    var alreadyDefined = ContextMenu._instances.find((instance) => {
+        return instance.target === target;
     });
 
+    // return found one if any instead of creating a new one
     if (alreadyDefined) return alreadyDefined;
 
+    // store target and params as properties to have access to them in methods
     this.target = target;
     this.params = params;
 
-    // listening to CM invoked and executing the callback function when it happened
+    // execute callback when CM invokation event happend
     this.listenToCMInvoked((event) => {
-        // if user wants the overlay laying under the CM
-
-
+        // prepare and draw overlay if needed
         if (this.params.overlay) {
             this.prepareOverlay();
+            this.drawOverlay();
         }
 
-        // drawing the CM with all the items, but making it "invisible" to the end user
-        this.prepareLayoutItems();
+        // prepare items and CM with this items
+        this.prepareItems();
         this.prepareCM();
 
-        // calculating the position of the real-one CM and making it visible
-        this.drawOverlay();
+        // calculate the position of the CM and draw it there
         var pos = this.calculatePosition(event);
         this.drawCM(pos);
 
-        // listening to CM closed and executing the callback function when it happened
+        // execute callback when CM invokation happened
         this.listenToCMClosed((event) => {
+            // close CM (with nested)
             this.close();
         });
     });
 
+    // store this instance to prevent "recreating"
     ContextMenu._instances.push(this);
 }
 
@@ -174,7 +177,7 @@ ContextMenu.prototype.prepareOverlay = function() {
     document.body.appendChild(this.overlay);
 };
 
-ContextMenu.prototype.prepareLayoutItems = function() {
+ContextMenu.prototype.prepareItems = function() {
     // everything that should be rendered on the page
     this.itemsToRender = this.params.items.map((item) => {
         if (item === "divider") {
@@ -263,10 +266,8 @@ ContextMenu.prototype.prepareCM = function() {
 };
 
 ContextMenu.prototype.drawOverlay = function() {
-    // make overlay visible if we have it
-    if (this.overlay) {
-        this.overlay.style.visibility = "visible";
-    }
+    // make overlay visible
+    this.overlay.style.visibility = "visible";
 }
 
 ContextMenu.prototype.drawCM = function(pos) {
@@ -345,6 +346,7 @@ ContextMenu.prototype.calculatePosition = function(event) {
 };
 
 function ContextSubMenu(params) {
+    // prevent ContextSubMenu usage as a function (not as a constructor)
     if (!(this instanceof ContextSubMenu)) {
         return new ContextSubMenu(params);
     }
@@ -358,7 +360,7 @@ ContextSubMenu.prototype.init = function(parent, callee) {
     this.parent = parent;
     this.callee = callee;
 
-    this.prepareLayoutItems(); // from parent
+    this.prepareItems(); // from parent
     this.prepareCM(); // form parent
 
     var pos = this.calculatePosition(callee);
