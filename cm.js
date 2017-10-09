@@ -245,9 +245,9 @@ ContextMenu.prototype.prepareItems = function() {
 };
 
 ContextMenu.prototype.prepareCM = function() {
-    // creating the CM element
+    // creatie the CM element
     this.cm = document.createElement("ol");
-    // addind data-cm for styling purposes
+    // add data-cm for styling purposes
     this.cm.dataset["cm"] = this.params.id || "";
 
     // necsessary styles
@@ -256,12 +256,12 @@ ContextMenu.prototype.prepareCM = function() {
     this.cm.style.visibility = "hidden";
     this.cm.style.zIndex = 2147483646;
 
-    // rendering every item (including dividers)
+    // make every item the child of the CM
     this.itemsToRender.forEach((item) => {
         this.cm.appendChild(item);
     });
 
-    // if we have the overlay then render CM in it else render right in the body
+    // render CM/CSM in the overlay if it presents or in the body if not
     if (this.getRoot().overlay) {
         this.getRoot().overlay.appendChild(this.cm);
     } else {
