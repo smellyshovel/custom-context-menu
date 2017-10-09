@@ -275,12 +275,12 @@ ContextMenu.prototype.drawOverlay = function() {
 }
 
 ContextMenu.prototype.drawCM = function(pos) {
-    // make CM visible and set it's position
+    // make CM visible on the calculated position
     this.cm.style.left = pos.x + "px";
     this.cm.style.top = pos.y + "px";
     this.cm.style.visibility = "visible";
 
-    // adding className for css transitions and animations
+    // add className for css transitions and animations
     this.cm.className = "visible";
 };
 
