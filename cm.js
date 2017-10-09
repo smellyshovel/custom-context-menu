@@ -269,7 +269,7 @@ ContextMenu.prototype.draw = function (pos) {
 ContextMenu.prototype.close = function() {
     // close opened CSM if any
     if (this.openedCSM) {
-        this.openedCSM.close();
+        this.openedCSM.close(true);
     }
 
     // clear timeout if we have YET unopened CSM
@@ -460,9 +460,9 @@ ContextSubMenu.prototype.draw = function() {
     this.cm.className = "visible";
 }
 
-ContextSubMenu.prototype.close = function () {
+ContextSubMenu.prototype.close = function (triggeredByRoot) {
     if (this.openedCSM) {
-        this.openedCSM.close();
+        this.openedCSM.close(triggeredByRoot);
     }
 
     if (this.timer) {
@@ -477,10 +477,27 @@ ContextSubMenu.prototype.close = function () {
         eventListener.t.removeEventListener(eventListener.e, eventListener.f);
     });
 
-    this.cm.className = "invisible";
-    this.cm.addEventListener("transitionend", (event) => {
+    // if close was triggered in the root CM, then we don't want to wait until transition ends
+    if (triggeredByRoot) {
         this.cm.remove();
-    });
+    } else {
+        // if close was triggered by for exmaple mouseleave on CSM, then
+        // we should check whether this CSM has transition property or not
+        // if it does then we remove it right after the transition is done
+        // if it doesn't then we remove it right on the way. This check is
+        // necsessary, because the transitionend
+        // event simply doesn't work if no transition provided (or it's)
+        // duration equals zero.
+        var transition = parseInt((getComputedStyle(this.cm)).transitionDuration) > 0;
+        if (transition) {
+            this.cm.className = "invisible";
+            this.cm.addEventListener("transitionend", (event) => {
+                this.cm.remove();
+            });
+        } else {
+            this.cm.remove();
+        }
+    }
 
     this.parent.openedCSM = null;
 };
