@@ -327,6 +327,8 @@ ContextMenu.prototype.calculatePosition = function(event) {
         cmWidth = this.cm.getBoundingClientRect().width,
         cmHeight = this.cm.getBoundingClientRect().height,
 
+        // furthest means the point that is opposite to the one FROM which the
+        // CM will be rendered
         furthestX = clickedX + cmWidth,
         furthestY = clickedY + cmHeight,
 
@@ -348,6 +350,7 @@ ContextMenu.prototype.calculatePosition = function(event) {
        }
     }
 
+    // bear in mind that page could be scrolled
     pos.x += document.documentElement.scrollLeft;
     pos.y += document.documentElement.scrollTop;
 
