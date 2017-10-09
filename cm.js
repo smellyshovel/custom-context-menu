@@ -33,7 +33,7 @@ function ContextMenu(target, params) {
         var pos = this.calculatePosition(event);
         this.drawCM(pos);
 
-        // execute callback when CM invokation happened
+        // execute callback when CM close happened
         this.listenToCMClosed((event) => {
             // close CM (with nested)
             this.close();
@@ -378,16 +378,22 @@ ContextSubMenu.prototype = Object.create(ContextMenu.prototype);
 // instance of it is created. But for the ContextSubMenu it happens in the
 // init() method which is called only when the CSM is going to opened.
 ContextSubMenu.prototype.init = function(parent, callee) {
+    // the parent is the CM/CSM that has the "li" that opened this CSM
     this.parent = parent;
+    // the callee is the "li" element mentioned above
     this.callee = callee;
 
-    this.prepareItems(); // from parent
-    this.prepareCM(); // form parent
+    // prepare items and CSM with this items
+    this.prepareItems(); // from ContextMenu
+    this.prepareCM(); // form ContextMenu
 
+    // calculate the position of the CM and draw it there
     var pos = this.calculatePosition(callee);
-    this.drawCM(pos); // from parent
+    this.drawCM(pos); // from ContextMenu
 
+    // execute callback when CSM close happened
     this.listenToCSMClosed((event) => {
+        // if the CSM was not closed already
         if (this.parent.openedCSM) {
             this.close();
         }
