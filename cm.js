@@ -368,8 +368,15 @@ function ContextSubMenu(params) {
     this.params = params;
 }
 
+// set the ContextMenu's prototype as a prototype of the ContextSubMenu for code
+// reuse / DRY / inheritance and then expand the ContextSubMenu's prototype with
+// the unique properties
 ContextSubMenu.prototype = Object.create(ContextMenu.prototype);
 
+// the differences in the logics between the ContextMenu and ContextSubMenu are
+// that all the "preparing" stuff for the ContextMenu happens right when the new
+// instance of it is created. But for the ContextSubMenu it happens in the
+// init() method which is called only when the CSM is going to opened.
 ContextSubMenu.prototype.init = function(parent, callee) {
     this.parent = parent;
     this.callee = callee;
