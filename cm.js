@@ -51,7 +51,7 @@ ContextMenu.prototype.getRoot = function() {
       return parent;
 };
 
-ContextMenu.prototype.listenToCMInvoked = function (callback) {
+ContextMenu.prototype.listenToCMInvoked = function(callback) {
     var getItems = function() {
         return [].slice.call(document.querySelectorAll("[data-item-cm]"));
     };
@@ -82,7 +82,7 @@ ContextMenu.prototype.listenToCMInvoked = function (callback) {
     });
 };
 
-ContextMenu.prototype.listenToCMClosed = function (callback) {
+ContextMenu.prototype.listenToCMClosed = function(callback) {
     var noRecreate = this.overlay && this.params.noRecreate,
         getItems = function() {
             return [].slice.call(document.querySelectorAll("[data-item-cm]"));
@@ -150,7 +150,7 @@ ContextMenu.prototype.listenToCMClosed = function (callback) {
     });
 };
 
-ContextMenu.prototype.prepareOverlay = function () {
+ContextMenu.prototype.prepareOverlay = function() {
     // creating an overlay a.k.a container for the future CM
     this.overlay = document.createElement("div");
     // addind data-overlay-cm for styling purposes
@@ -174,7 +174,7 @@ ContextMenu.prototype.prepareOverlay = function () {
     document.body.appendChild(this.overlay);
 };
 
-ContextMenu.prototype.prepareLayoutItems = function () {
+ContextMenu.prototype.prepareLayoutItems = function() {
     // everything that should be rendered on the page
     this.itemsToRender = this.params.items.map((item) => {
         if (item === "divider") {
@@ -269,7 +269,7 @@ ContextMenu.prototype.drawOverlay = function() {
     }
 }
 
-ContextMenu.prototype.drawCM = function (pos) {
+ContextMenu.prototype.drawCM = function(pos) {
     // make CM visible and set it's position
     this.cm.style.left = pos.x + "px";
     this.cm.style.top = pos.y + "px";
@@ -373,7 +373,7 @@ ContextSubMenu.prototype.init = function(parent, callee) {
     return this;
 }
 
-ContextSubMenu.prototype.close = function (triggeredByRoot) {
+ContextSubMenu.prototype.close = function(triggeredByRoot) {
     ContextMenu.prototype.closeCSMsAndRemoveEventListeners.call(this);
 
     // if close was triggered in the root CM, then we don't want to wait until transition ends
@@ -401,7 +401,7 @@ ContextSubMenu.prototype.close = function (triggeredByRoot) {
     this.parent.openedCSM = null;
 };
 
-ContextSubMenu.prototype.listenToCSMClosed = function (callback) {
+ContextSubMenu.prototype.listenToCSMClosed = function(callback) {
     var closeDelay = this.params.delay.close * 1000;
     closeDelay = (!Number.isNaN(closeDelay)) ? closeDelay : 0;
 
