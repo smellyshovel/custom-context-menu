@@ -41,6 +41,16 @@ function ContextMenu(target, params) {
 
 ContextMenu._instances = [];
 
+ContextMenu.prototype.getRoot = function() {
+    if (this instanceof ContextMenu) return this;
+
+    var parent = this.parent;
+    while("parent" in parent) {
+        parent = parent.parent;
+    }
+    return parent;
+};
+
 ContextMenu.prototype.listenToCMInvoked = function (callback) {
     var getItems = function() {
         return [].slice.call(document.querySelectorAll("[data-item-cm]"));
@@ -244,8 +254,8 @@ ContextMenu.prototype.prepareCM = function() {
     });
 
     // if we have the overlay then render CM in it else render right in the body
-    if (this.params.overlay) {
-        this.overlay.appendChild(this.cm);
+    if (this.getRoot().overlay) {
+        this.getRoot().overlay.appendChild(this.cm);
     } else {
         document.body.appendChild(this.cm);
     }
@@ -253,8 +263,10 @@ ContextMenu.prototype.prepareCM = function() {
 
 ContextMenu.prototype.draw = function (pos) {
     // make overlay visible if we have it
-    if (this.overlay) {
-        this.overlay.style.visibility = "visible";
+    if (this instanceof ContextMenu) {
+        if (this.overlay) {
+            this.overlay.style.visibility = "visible";
+        }
     }
 
     // make CM visible and set it's position
@@ -335,22 +347,17 @@ function ContextSubMenu(params) {
     this.params = params;
 }
 
+ContextSubMenu.prototype = Object.create(ContextMenu.prototype);
+
 ContextSubMenu.prototype.init = function(parent, callee) {
     this.parent = parent;
-    this.root = (() => {
-        var parent = this.parent;
-        while("parent" in parent) {
-            parent = parent.parent;
-        }
-        return parent;
-    })();
     this.callee = callee;
 
-    this.prepareLayoutItems();
-    this.prepareCSM();
+    this.prepareLayoutItems(); // from parent
+    this.prepareCM(); // form parent
 
-    this.calculatePosition(callee);
-    this.draw();
+    var pos = this.calculatePosition(callee);
+    this.draw(pos); // from parent
 
     this.listenToCSMClosed((event) => {
         if (this.parent.openedCSM) {
@@ -359,105 +366,6 @@ ContextSubMenu.prototype.init = function(parent, callee) {
     });
 
     return this;
-}
-
-ContextSubMenu.prototype.prepareLayoutItems = function() {
-    // everything that should be rendered on the page
-    this.itemsToRender = this.params.items.map((item) => {
-        if (item === "divider") {
-            var node = document.createElement("div");
-            node.dataset.itemServiceCm = "divider";
-
-            return node;
-        }
-
-        var text = document.createTextNode(item.title),
-            node = document.createElement("li");
-
-        node.dataset.itemCm = this.params.id || "";
-        node.appendChild(text);
-
-        if (item.function instanceof ContextSubMenu) {
-            var openDelay = item.function.params.delay.open * 1000;
-            openDelay = (!Number.isNaN(openDelay)) ? openDelay : 0;
-
-            node.addEventListener("mouseenter", (event) => {
-                this.timer = setTimeout(() => {
-                    if (!this.openedCSM) {
-                        this.openedCSM = item.function.init(this, node);
-                    } else if (this.openedCSM !== item.function) {
-                        this.openedCSM.close();
-                        this.openedCSM = item.function.init(this, node);
-                    }
-                }, openDelay);
-            });
-
-            node.addEventListener("mouseleave", (event) => {
-                clearTimeout(this.timer);
-            });
-
-            node.addEventListener("mousedown", (event) => {
-                clearTimeout(this.timer);
-
-                if (!this.openedCSM) {
-                    this.openedCSM = item.function.init(this, node);
-                } else if (this.openedCSM !== item.function) {
-                    this.openedCSM.close();
-                    this.openedCSM = item.function.init(this, node);
-                }
-            });
-        } else {
-            // when user releases mouse button on item
-            node.addEventListener("mouseup", (event) => {
-                this.root.close();
-                item.function();
-            });
-        }
-
-        return node;
-    });
-
-    // items that are actual buttons (not dividers or sort of)
-    this.items = this.itemsToRender.filter((item) => {
-        return item.dataset.hasOwnProperty("itemCm");
-    });
-}
-
-ContextSubMenu.prototype.prepareCSM = function() {
-    // creating the CSM element
-    this.cm = document.createElement("ol");
-    // addind data-cm for styling purposes
-    this.cm.dataset["cm"] = this.params.id || "";
-
-    // necsessary styles
-    this.cm.style.position = "absolute";
-    this.cm.style.display = "block";
-    this.cm.style.visibility = "hidden";
-    this.cm.style.zIndex = 2147483647;
-
-    this.cm.className = "invisible";
-
-    // rendering every item (including dividers)
-    this.itemsToRender.forEach((item) => {
-        this.cm.appendChild(item);
-    });
-
-    // if root has the overlay then render CSM in it else render right in the body
-    if (this.root.overlay) {
-        this.root.overlay.appendChild(this.cm);
-    } else {
-        document.body.appendChild(this.cm);
-    }
-}
-
-ContextSubMenu.prototype.draw = function() {
-    // make CM visible and set it's position
-    this.cm.style.left = this.pos.x + "px";
-    this.cm.style.top = this.pos.y + "px";
-    this.cm.style.visibility = "visible";
-
-    // adding className for css transitions and animations
-    this.cm.className = "visible";
 }
 
 ContextSubMenu.prototype.close = function (triggeredByRoot) {
@@ -593,6 +501,5 @@ ContextSubMenu.prototype.calculatePosition = function(li) {
             pos.y = liBottom - cmHeight;
         }
 
-        this.pos = pos;
         return pos;
 }
