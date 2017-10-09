@@ -41,8 +41,12 @@ function ContextMenu(target, params) {
 
 ContextMenu._instances = [];
 
+ContextMenu.prototype.isRoot = function() {
+    return "parent" in this;
+}
+
 ContextMenu.prototype.getRoot = function() {
-    if (this.parent) {
+    if (!this.isRoot()) {
           var parent = this.parent;
           while("parent" in parent) {
               parent = parent.parent;
@@ -265,7 +269,7 @@ ContextMenu.prototype.prepareCM = function() {
 
 ContextMenu.prototype.draw = function (pos) {
     // make overlay visible if we have it
-    if (!this.parent) { // instead of `this instanceof ContextMenu`
+    if (this.isRoot()) { // instead of `this instanceof ContextMenu`
         console.log("here");
         if (this.overlay) {
             this.overlay.style.visibility = "visible";
@@ -281,10 +285,10 @@ ContextMenu.prototype.draw = function (pos) {
     this.cm.className = "visible";
 };
 
-ContextMenu.prototype.close = function() {
+ContextMenu.prototype.closeCSMsAndRemoveEventListeners = function(triggeredByRoot) {
     // close opened CSM if any
     if (this.openedCSM) {
-        this.openedCSM.close(true);
+        this.openedCSM.close(triggeredByRoot);
     }
 
     // clear timeout if we have YET unopened CSM
@@ -296,6 +300,10 @@ ContextMenu.prototype.close = function() {
     this.eventListenersToRemove.forEach(function(eventListener) {
         eventListener.t.removeEventListener(eventListener.e, eventListener.cb);
     });
+}
+
+ContextMenu.prototype.close = function() {
+    this.closeCSMsAndRemoveEventListeners(true);
 
     // if we have the overlay then remove it else remove CM directly
     if (this.overlay) {
@@ -372,21 +380,7 @@ ContextSubMenu.prototype.init = function(parent, callee) {
 }
 
 ContextSubMenu.prototype.close = function (triggeredByRoot) {
-    if (this.openedCSM) {
-        this.openedCSM.close(triggeredByRoot);
-    }
-
-    if (this.timer) {
-        clearTimeout(this.timer);
-    }
-
-    if (this.closeTimer) {
-        clearTimeout(this.closeTimer);
-    }
-
-    this.eventListenersToRemove.forEach((eventListener) => {
-        eventListener.t.removeEventListener(eventListener.e, eventListener.f);
-    });
+    ContextMenu.prototype.closeCSMsAndRemoveEventListeners.call(this);
 
     // if close was triggered in the root CM, then we don't want to wait until transition ends
     if (triggeredByRoot) {
