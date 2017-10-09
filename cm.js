@@ -27,8 +27,9 @@ function ContextMenu(target, params) {
         this.prepareCM();
 
         // calculating the position of the real-one CM and making it visible
+        this.drawOverlay();
         var pos = this.calculatePosition(event);
-        this.draw(pos);
+        this.drawCM(pos);
 
         // listening to CM closed and executing the callback function when it happened
         this.listenToCMClosed((event) => {
@@ -42,7 +43,7 @@ function ContextMenu(target, params) {
 ContextMenu._instances = [];
 
 ContextMenu.prototype.isRoot = function() {
-    return "parent" in this;
+    return !("parent" in this);
 }
 
 ContextMenu.prototype.getRoot = function() {
@@ -236,6 +237,7 @@ ContextMenu.prototype.prepareLayoutItems = function () {
         return node;
     });
 
+    // TODO: check if not needed
     // items that are actual buttons (not dividers or sort of)
     this.items = this.itemsToRender.filter((item) => {
         return item.dataset.hasOwnProperty("itemCm");
@@ -267,15 +269,14 @@ ContextMenu.prototype.prepareCM = function() {
     }
 };
 
-ContextMenu.prototype.draw = function (pos) {
+ContextMenu.prototype.drawOverlay = function() {
     // make overlay visible if we have it
-    if (this.isRoot()) { // instead of `this instanceof ContextMenu`
-        console.log("here");
-        if (this.overlay) {
-            this.overlay.style.visibility = "visible";
-        }
+    if (this.overlay) {
+        this.overlay.style.visibility = "visible";
     }
+}
 
+ContextMenu.prototype.drawCM = function (pos) {
     // make CM visible and set it's position
     this.cm.style.left = pos.x + "px";
     this.cm.style.top = pos.y + "px";
@@ -368,7 +369,7 @@ ContextSubMenu.prototype.init = function(parent, callee) {
     this.prepareCM(); // form parent
 
     var pos = this.calculatePosition(callee);
-    this.draw(pos); // from parent
+    this.drawCM(pos); // from parent
 
     this.listenToCSMClosed((event) => {
         if (this.parent.openedCSM) {
