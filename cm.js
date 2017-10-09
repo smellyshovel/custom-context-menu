@@ -514,6 +514,8 @@ ContextSubMenu.prototype.calculatePosition = function(li) {
         cmWidth = this.cm.getBoundingClientRect().width,
         cmHeight = this.cm.getBoundingClientRect().height,
 
+        // furthest means the point that is opposite to the one FROM which the
+        // CM will be rendered
         furthestX = liRight + cmWidth,
         furthestY = liTop + cmHeight,
 
