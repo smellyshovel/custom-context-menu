@@ -175,7 +175,7 @@ ContextMenu.prototype.prepareOverlay = function() {
 };
 
 ContextMenu.prototype.prepareItems = function() {
-    // everything that should be rendered on the page
+    // everything that is going to be rendered in the CM
     this.itemsToRender = this.params.items.map((item) => {
         if (item === "divider") {
             var node = document.createElement("div");
@@ -187,18 +187,26 @@ ContextMenu.prototype.prepareItems = function() {
         var text = document.createTextNode(item.title),
             node = document.createElement("li");
 
+        // add data-item-cm for styling purposes
         node.dataset.itemCm = this.params.id || "";
         node.appendChild(text);
 
+        // if the purpose of the item is to open another CM
         if (item.function instanceof ContextSubMenu) {
+            // ensure that given params' type is number else make it zero
             var openDelay = item.function.params.delay.open * 1000;
             openDelay = (!Number.isNaN(openDelay)) ? openDelay : 0;
 
             node.addEventListener("mouseenter", (event) => {
                 this.timer = setTimeout(() => {
                     if (!this.openedCSM) {
+                        // open new CSM
                         this.openedCSM = item.function.init(this, node);
+
+                    // if CSM is already opened but mouse entered another item
+                    // that is also opens a CSM
                     } else if (this.openedCSM !== item.function) {
+                        // close existing CSM and open a new one
                         this.openedCSM.close();
                         this.openedCSM = item.function.init(this, node);
                     }
@@ -209,31 +217,30 @@ ContextMenu.prototype.prepareItems = function() {
                 clearTimeout(this.timer);
             });
 
+            // open CSM immidiatly
             node.addEventListener("mousedown", (event) => {
                 clearTimeout(this.timer);
 
                 if (!this.openedCSM) {
                     this.openedCSM = item.function.init(this, node);
+
+                // unless event occurred on the same item again
                 } else if (this.openedCSM !== item.function) {
                     this.openedCSM.close();
                     this.openedCSM = item.function.init(this, node);
                 }
             });
+
+        // if the purpose of the item is to execute the given function
         } else {
-            // when user releases mouse button on item
             node.addEventListener("mouseup", (event) => {
+                // close all the CMs and then execute the given function
                 this.getRoot().close();
                 item.function();
             });
         }
 
         return node;
-    });
-
-    // TODO: check if not needed
-    // items that are actual buttons (not dividers or sort of)
-    this.items = this.itemsToRender.filter((item) => {
-        return item.dataset.hasOwnProperty("itemCm");
     });
 };
 
