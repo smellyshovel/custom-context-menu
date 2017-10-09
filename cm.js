@@ -284,25 +284,30 @@ ContextMenu.prototype.drawCM = function(pos) {
     this.cm.className = "visible";
 };
 
-ContextMenu.prototype.closeCSMsAndRemoveEventListeners = function(triggeredByRoot) {
+ContextMenu.prototype.prepareForClose = function(triggeredByRoot) {
     // close opened CSM if any
     if (this.openedCSM) {
         this.openedCSM.close(triggeredByRoot);
     }
 
-    // clear timeout if we have YET unopened CSM
+    // clear timeout if there is a YET unopened CSM
     if (this.timer) {
         clearTimeout(this.timer);
     }
 
-    // removing all no-longer-needed event listeners to keep everything clean
+    // clear CSM's closeTimer if there is a YET unclosed CSM
+    if (this.closeTimer) {
+        clearTimeout(this.closeTimer);
+    }
+
+    // remove all previously strored event listeners to keep everything clean
     this.eventListenersToRemove.forEach(function(eventListener) {
         eventListener.t.removeEventListener(eventListener.e, eventListener.cb);
     });
 }
 
 ContextMenu.prototype.close = function() {
-    this.closeCSMsAndRemoveEventListeners(true);
+    this.prepareForClose(true);
 
     // if we have the overlay then remove it else remove CM directly
     if (this.overlay) {
@@ -380,7 +385,7 @@ ContextSubMenu.prototype.init = function(parent, callee) {
 }
 
 ContextSubMenu.prototype.close = function(triggeredByRoot) {
-    ContextMenu.prototype.closeCSMsAndRemoveEventListeners.call(this);
+    ContextMenu.prototype.prepareForClose.call(this);
 
     // if close was triggered in the root CM, then we don't want to wait until transition ends
     if (triggeredByRoot) {
