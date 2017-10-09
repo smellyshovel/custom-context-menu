@@ -194,7 +194,7 @@ ContextMenu.prototype.prepareItems = function() {
 
         // if the purpose of the item is to open another CM
         if (item.function instanceof ContextSubMenu) {
-            // ensure that given params' type is number else make it zero
+            // ensure that given param's type is number else make it equals zero
             var openDelay = item.function.params.delay.open * 1000;
             openDelay = (!Number.isNaN(openDelay)) ? openDelay : 0;
 
@@ -435,10 +435,9 @@ ContextSubMenu.prototype.close = function(triggeredByRoot) {
 };
 
 ContextSubMenu.prototype.listenToCSMClosed = function(callback) {
+    // ensure that given param's type is number else make it equals zero
     var closeDelay = this.params.delay.close * 1000;
     closeDelay = (!Number.isNaN(closeDelay)) ? closeDelay : 0;
-
-    // var exceptCallee = this.parent.items
 
     this.eventListenersToRemove = [
         { // if mouse leaves the callee (CSM untouched)
@@ -467,7 +466,9 @@ ContextSubMenu.prototype.listenToCSMClosed = function(callback) {
             t: this.cm,
             e: "mouseleave",
             f: (event) => {
+                // if there is an opened CSM by this CSM
                 if (this.openedCSM) {
+                    // and if mouse leaved somwhere not to it's CSM
                     if (event.toElement !== this.openedCSM.cm) {
                         console.log("Will be closed");
                         this.closeTimer = setTimeout(() => {
@@ -495,6 +496,7 @@ ContextSubMenu.prototype.listenToCSMClosed = function(callback) {
         }
     ];
 
+    // add previously defined event listeners
     this.eventListenersToRemove.forEach((eventListener) => {
         eventListener.t.addEventListener(eventListener.e, eventListener.f);
     });
