@@ -309,7 +309,7 @@ ContextMenu.prototype.prepareForClose = function(triggeredByRoot) {
 ContextMenu.prototype.close = function() {
     this.prepareForClose(true);
 
-    // if we have the overlay then remove it else remove CM directly
+    // remove the overlay if it's present else remove CM directly
     if (this.overlay) {
         this.overlay.remove();
     } else {
