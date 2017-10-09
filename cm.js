@@ -151,9 +151,9 @@ ContextMenu.prototype.listenToCMClosed = function(callback) {
 };
 
 ContextMenu.prototype.prepareOverlay = function() {
-    // creating an overlay a.k.a container for the future CM
+    // create the overlay element
     this.overlay = document.createElement("div");
-    // addind data-overlay-cm for styling purposes
+    // add data-overlay-cm for styling purposes
     this.overlay.dataset.overlayCm = this.params.id || "";
 
     var scrollLeft = document.documentElement.scrollLeft,
@@ -170,7 +170,7 @@ ContextMenu.prototype.prepareOverlay = function() {
     this.overlay.style.visibility = "hidden";
     this.overlay.style.zIndex = 2147483645;
 
-    // drawing overlay right in the body
+    // append invisible overlay to the body
     document.body.appendChild(this.overlay);
 };
 
