@@ -265,7 +265,8 @@ ContextMenu.prototype.prepareCM = function() {
 
 ContextMenu.prototype.draw = function (pos) {
     // make overlay visible if we have it
-    if (this instanceof ContextMenu) {
+    if (!this.parent) { // instead of `this instanceof ContextMenu`
+        console.log("here");
         if (this.overlay) {
             this.overlay.style.visibility = "visible";
         }
