@@ -54,30 +54,28 @@ ContextMenu.prototype.getRoot = function() {
       return parent;
 };
 
-ContextMenu.prototype.listenToCMInvoked = function(callback) {
-    var getItems = function() {
-        return [].slice.call(document.querySelectorAll("[data-item-cm]"));
-    };
+ContextMenu.prototype.getItems = function() {
+    // return every element with data-item-cm in as an array
+    return [].slice.call(document.querySelectorAll("[data-item-cm]"));
+}
 
+ContextMenu.prototype.listenToCMInvoked = function(callback) {
     this.target.addEventListener("contextmenu", (event) => {
         // if CM is not disabled
-        if (!(this.params.disabled === true)) {
-            // defaultOnAlt enabled
+        if (!this.params.disabled) {
+            // force defaultOnAlt param to true if nothing's given
             var defaultOnAlt = ("defaultOnAlt" in this.params) ? this.params.defaultOnAlt : true;
 
+            // if defaultOnAlt is true then check whether the alt key was not
+            // holded when the event was triggered or it was. If it was then the
+            // code below just won't be executed
             if (defaultOnAlt ? event.altKey === false : true) {
-                // preventing default CM to appear
+                // prevent default CM to appear
                 event.preventDefault();
-                /*
-                    stop of the propagation is needed because if you have overlay
-                    enabled then right click on the non-document CM's overlay will
-                    open the document's CM even if the click happened on an element
-                    that has it's own CM
-                */
                 event.stopPropagation();
 
-                // bug #1 (created document CM if rightclicked on non-document cm's item)
-                if (getItems().indexOf(event.target) === -1) {
+                // look for bug #1 in issues
+                if (this.getItems().indexOf(event.target) === -1) {
                     callback(event);
                 }
             }
@@ -86,10 +84,7 @@ ContextMenu.prototype.listenToCMInvoked = function(callback) {
 };
 
 ContextMenu.prototype.listenToCMClosed = function(callback) {
-    var noRecreate = this.overlay && this.params.noRecreate,
-        getItems = function() {
-            return [].slice.call(document.querySelectorAll("[data-item-cm]"));
-        };
+    var noRecreate = this.overlay && this.params.noRecreate;
 
     // storing "closing" event listeners as an array to easily later removal
     if (this.overlay) {
@@ -100,7 +95,7 @@ ContextMenu.prototype.listenToCMClosed = function(callback) {
                 cb: (event) => {
                     if (noRecreate ? event.which !== 3 : true) {
                         // if clicked not on item
-                        if (getItems().indexOf(event.target) === -1) {
+                        if (this.getItems().indexOf(event.target) === -1) {
                             callback(event);
                         }
                     }
@@ -115,7 +110,7 @@ ContextMenu.prototype.listenToCMClosed = function(callback) {
                     event.stopPropagation();
 
                     // if clicked not on item
-                    if (getItems().indexOf(event.target) === -1) {
+                    if (this.getItems().indexOf(event.target) === -1) {
                         callback(event);
                     }
                 }
@@ -128,7 +123,7 @@ ContextMenu.prototype.listenToCMClosed = function(callback) {
                 e: "mousedown",
                 cb: (event) => {
                     // if clicked not on item
-                    if (getItems().indexOf(event.target) === -1) {
+                    if (this.getItems().indexOf(event.target) === -1) {
                         callback(event);
                     }
                 }
