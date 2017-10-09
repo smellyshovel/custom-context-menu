@@ -1,5 +1,5 @@
 function ContextMenu(target, params) {
-    // prevent ContextMenu to be used as a function (not as a constructor)
+    // prevent ContextMenu to be executed as a function (not as a constructor)
     if (!(this instanceof ContextMenu)) {
         return new ContextMenu(target, params);
     }
@@ -12,7 +12,8 @@ function ContextMenu(target, params) {
     // return found one if any instead of creating a new one
     if (alreadyDefined) return alreadyDefined;
 
-    // store target and params as properties to have access to them in methods
+    // store target and params as properties to have an access to them in the
+    // methods
     this.target = target;
     this.params = params;
 
@@ -358,11 +359,12 @@ ContextMenu.prototype.calculatePosition = function(event) {
 };
 
 function ContextSubMenu(params) {
-    // prevent ContextSubMenu usage as a function (not as a constructor)
+    // prevent ContextSubMenu executed as a function (not as a constructor)
     if (!(this instanceof ContextSubMenu)) {
         return new ContextSubMenu(params);
     }
 
+    // store params as property to have an access to it in the methods
     this.params = params;
 }
 
