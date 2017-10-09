@@ -529,5 +529,9 @@ ContextSubMenu.prototype.calculatePosition = function(li) {
             pos.y = liBottom - cmHeight;
         }
 
+        // bear in mind that page could be scrolled
+        pos.x += document.documentElement.scrollLeft;
+        pos.y += document.documentElement.scrollTop;
+
         return pos;
 }
