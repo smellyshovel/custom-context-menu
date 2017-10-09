@@ -42,13 +42,15 @@ function ContextMenu(target, params) {
 ContextMenu._instances = [];
 
 ContextMenu.prototype.getRoot = function() {
-    if (this instanceof ContextMenu) return this;
+    if (this.parent) {
+          var parent = this.parent;
+          while("parent" in parent) {
+              parent = parent.parent;
+          }
+          return parent;
+      }
 
-    var parent = this.parent;
-    while("parent" in parent) {
-        parent = parent.parent;
-    }
-    return parent;
+      return this;
 };
 
 ContextMenu.prototype.listenToCMInvoked = function (callback) {
@@ -222,7 +224,7 @@ ContextMenu.prototype.prepareLayoutItems = function () {
         } else {
             // when user releases mouse button on item
             node.addEventListener("mouseup", (event) => {
-                this.close();
+                this.getRoot().close();
                 item.function();
             });
         }
