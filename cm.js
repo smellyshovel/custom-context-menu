@@ -33,10 +33,22 @@ function ContextMenu(target, params) {
         var pos = this.calculatePosition(event);
         this.drawCM(pos);
 
+        // execute open callback if defined
+        var openCallback = this.getCallback("open");
+        if (openCallback) {
+            openCallback();
+        }
+
         // execute callback when CM close happened
         this.listenToCMClosed((event) => {
             // close CM (with nested)
             this.close();
+
+            // execute close callback if defined
+            var closeCallback = this.getCallback("close");
+            if (closeCallback) {
+                closeCallback();
+            }
         });
     });
 
@@ -45,6 +57,30 @@ function ContextMenu(target, params) {
 }
 
 ContextMenu._instances = [];
+
+ContextMenu.prototype.getCallback = function (after) {
+    if ("callback" in this.params) {
+        var callback = this.params.callback;
+    } else {
+        return null;
+    }
+
+    if (after === "open") {
+        if (typeof callback === "function") {
+            return callback;
+        }
+
+        if ("open" in callback && typeof callback.open === "function") {
+            return callback.open;
+        }
+
+        return null;
+    } else if (after === "close") {
+        if ("close" in callback && typeof callback.close === "function") {
+            return callback.close;
+        }
+    }
+};
 
 ContextMenu.prototype.getRoot = function() {
       var parent = this;
@@ -391,11 +427,24 @@ ContextSubMenu.prototype.init = function(parent, callee) {
     var pos = this.calculatePosition(callee);
     this.drawCM(pos); // from ContextMenu
 
+    // execute open callback if defined
+    var openCallback = this.getCallback("open");
+    if (openCallback) {
+        openCallback();
+    }
+
     // execute callback when CSM close happened
     this.listenToCSMClosed((event) => {
         // if the CSM was not closed already
         if (this.parent.openedCSM) {
+            // close CM (with nested)
             this.close();
+
+            // execute close callback if defined
+            var closeCallback = this.getCallback("close");
+            if (closeCallback) {
+                closeCallback();
+            }
         }
     });
 
