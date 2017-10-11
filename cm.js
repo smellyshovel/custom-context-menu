@@ -19,10 +19,21 @@ function ContextMenu(target, params) {
 
     // execute callback when CM invokation event happend
     this.listenToCMInvoked((event) => {
+        // prevent global namespace polluting by multiple assignment
+        var overflow;
+
         // prepare and draw overlay if needed
         if (this.params.overlay) {
+            // force disable scrolling if using an overlay
+            var scrollingDisabled = overflow = this.disableScrolling();
+
             this.prepareOverlay();
             this.drawOverlay();
+        } else {
+            // disable scrolling unless it's not explicitly allowed
+            if (!this.params.scrolling) {
+                var scrollingDisabled = overflow = this.disableScrolling();
+            }
         }
 
         // prepare items and CM with this items
@@ -43,6 +54,11 @@ function ContextMenu(target, params) {
         this.listenToCMClosed((event) => {
             // close CM (with nested)
             this.close();
+
+            // enable scrolling back
+            if (scrollingDisabled) {
+                this.enableScrolling(overflow);
+            }
 
             // execute close callback if defined
             var closeCallback = this.getCallback("close");
@@ -95,6 +111,21 @@ ContextMenu.prototype.getItems = function() {
     // return every element with data-item-cm in as an array
     return [].slice.call(document.querySelectorAll("[data-item-cm]"));
 }
+
+ContextMenu.prototype.disableScrolling = function () {
+    // save the pravious state of overflow property
+    var previousState = getComputedStyle(document.documentElement).overflow;
+
+    // disable scrolling via overflow set to `hidden`
+    document.documentElement.style.overflow = "hidden";
+
+    return previousState;
+};
+
+ContextMenu.prototype.enableScrolling = function (state) {
+    // return the overflow property to the previous state
+    document.documentElement.style.overflow = state;
+};
 
 ContextMenu.prototype.listenToCMInvoked = function(callback) {
     this.target.addEventListener("contextmenu", (event) => {
