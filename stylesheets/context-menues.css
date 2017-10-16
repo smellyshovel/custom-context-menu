@@ -1,0 +1,25 @@
+[data-cm = "tile-1"] {
+    margin: 0;
+    padding: 0;
+    background-color: #fff;
+    border: 10px solid rgba(0, 0, 0, 0.6);
+    border-radius: 1rem;
+    list-style: none;
+}
+
+[data-item-cm = "tile-1"] {
+    padding: 0;
+    margin: 0;
+    padding: 1rem;
+    background-color: #947d7d;
+}
+
+[data-item-cm = "tile-1"]:first-child {
+    border-top-left-radius: 1rem;
+    border-top-right-radius: 1rem;
+}
+
+[data-item-cm = "tile-1"]:last-child {
+    margin: 0;
+    padding: 1rem;
+}

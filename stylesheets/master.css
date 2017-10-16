@@ -1,0 +1,27 @@
+@font-face {
+    font-family: "Alex";
+    src: url("AlexDirte Brush Font.ttf") format("ttf");
+}
+
+html {
+    font-size: 22px;
+}
+
+body {
+    margin: 0;
+}
+
+section.tile {
+    display: block;
+    min-height: 100vh;
+}
+
+.tile-view {
+    margin: auto;
+    display: block;
+    height: 100%;
+}
+
+#tile-1 .tile-view {
+    font-family: "Alex";
+}
