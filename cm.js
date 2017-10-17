@@ -127,26 +127,27 @@ ContextMenu.prototype.enableScrolling = function (state) {
 
 ContextMenu.prototype.listenToCMInvoked = function(target, callback) {
     target.addEventListener("contextmenu", (event) => {
-        // if CM is not disabled
-        if (!this.params.disabled) {
-            // force defaultOnAlt param to true if nothing's given
-            var defaultOnAlt = ("defaultOnAlt" in this.params) ? this.params.defaultOnAlt : true;
+        event.stopPropagation();
 
-            // if defaultOnAlt is true then check whether the alt key was not
-            // holded when the event was triggered or it was. If it was then the
-            // code below just won't be executed
-            if (defaultOnAlt ? event.altKey === false : true) {
-                // prevent default CM to appear
-                event.preventDefault();
-                event.stopPropagation();
+        // force defaultOnAlt param to true if nothing's given
+        var defaultOnAlt = ("defaultOnAlt" in this.params) ? this.params.defaultOnAlt : true;
 
+        // if defaultOnAlt is true then check whether the alt key was not
+        // holded when the event was triggered or it was. If it was then the
+        // code below just won't be executed
+        if (defaultOnAlt ? event.altKey === false : true) {
+            // prevent default CM to appear
+            event.preventDefault();
+
+            // if the CM is not disabled
+            if (!this.params.disabled) {
                 // look for bug #1 in issues
                 if (this.getItems().indexOf(event.target) === -1) {
                     callback(event);
                 }
             }
         }
-    });
+    }, false);
 };
 
 ContextMenu.prototype.listenToCMClosed = function(callback) {
