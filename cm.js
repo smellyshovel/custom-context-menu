@@ -12,13 +12,11 @@ function ContextMenu(target, params) {
     // return found one if any instead of creating a new one
     if (alreadyDefined) return alreadyDefined;
 
-    // store target and params as properties to have an access to them in the
-    // methods
-    this.target = target;
+    // store params as a property to have an access to it in the methods
     this.params = params;
 
     // execute callback when CM invokation event happend
-    this.listenToCMInvoked((event) => {
+    this.listenToCMInvoked(target, (event) => {
         // prevent global namespace polluting by multiple assignment
         var overflow;
 
@@ -127,8 +125,8 @@ ContextMenu.prototype.enableScrolling = function (state) {
     document.documentElement.style.overflow = state;
 };
 
-ContextMenu.prototype.listenToCMInvoked = function(callback) {
-    this.target.addEventListener("contextmenu", (event) => {
+ContextMenu.prototype.listenToCMInvoked = function(target, callback) {
+    target.addEventListener("contextmenu", (event) => {
         // if CM is not disabled
         if (!this.params.disabled) {
             // force defaultOnAlt param to true if nothing's given
