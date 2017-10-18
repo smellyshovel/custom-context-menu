@@ -105,11 +105,6 @@ ContextMenu.prototype.getRoot = function() {
       return parent;
 };
 
-ContextMenu.prototype.getItems = function() {
-    // return every element with data-item-cm in as an array
-    return [].slice.call(document.querySelectorAll("[data-item-cm]"));
-}
-
 ContextMenu.prototype.disableScrolling = function () {
     // save the pravious state of overflow property
     var previousState = getComputedStyle(document.documentElement).overflow;
@@ -141,10 +136,7 @@ ContextMenu.prototype.listenToCMInvoked = function(target, callback) {
 
             // if the CM is not disabled
             if (!this.params.disabled) {
-                // look for bug #1 in issues
-                if (this.getItems().indexOf(event.target) === -1) {
-                    callback(event);
-                }
+                callback(event);
             }
         }
     }, false);
@@ -155,17 +147,14 @@ ContextMenu.prototype.listenToCMClosed = function(callback) {
     var noRecreate = this.params.overlay && this.params.noRecreate;
 
     // store close event listeners as an array to easily remove them in #close()
-    if (this.overlay) {
+    if (noRecreate) {
         this.eventListenersToRemove = [
             {
                 t: document,
                 e: "mousedown",
                 cb: (event) => {
-                    if (noRecreate ? event.which !== 3 : true) {
-                        // if clicked not on item
-                        if (this.getItems().indexOf(event.target) === -1) {
-                            callback(event);
-                        }
+                    if (event.which !== 3) {
+                        callback(event);
                     }
                 }
             },
@@ -174,13 +163,10 @@ ContextMenu.prototype.listenToCMClosed = function(callback) {
                 t: this.overlay,
                 e: "contextmenu",
                 cb: (event) => {
-                    event.preventDefault();
                     event.stopPropagation();
+                    event.preventDefault();
 
-                    // if clicked not on item
-                    if (this.getItems().indexOf(event.target) === -1) {
-                        callback(event);
-                    }
+                    callback(event);
                 }
             }
         ];
@@ -190,12 +176,9 @@ ContextMenu.prototype.listenToCMClosed = function(callback) {
                 t: document,
                 e: "mousedown",
                 cb: (event) => {
-                    // if clicked not on item
-                    if (this.getItems().indexOf(event.target) === -1) {
-                        callback(event);
-                    }
+                    callback(event);
                 }
-            }
+            },
         ];
     }
 
@@ -306,6 +289,16 @@ ContextMenu.prototype.prepareItems = function() {
                 item.function();
             });
         }
+
+        // prevent CM close
+        node.addEventListener("mousedown", (event) => {
+            event.stopPropagation();
+        });
+
+        node.addEventListener("contextmenu", (event) => {
+            event.stopPropagation();
+            event.preventDefault();
+        });
 
         return node;
     });
