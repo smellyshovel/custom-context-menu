@@ -18,19 +18,19 @@ function ContextMenu(target, params) {
     // execute callback when CM invokation event happend
     this.listenToCMInvoked(target, (event) => {
         // prevent global namespace polluting by multiple assignment
-        var overflow;
+        var scrollingDisabled, overflow;
 
         // prepare and draw overlay if needed
         if (this.params.overlay) {
             // force disable scrolling if using an overlay
-            var scrollingDisabled = overflow = this.disableScrolling();
+            scrollingDisabled = overflow = this.disableScrolling();
 
             this.prepareOverlay();
             this.drawOverlay();
         } else {
             // disable scrolling unless it's not explicitly allowed
             if (!this.params.scrolling) {
-                var scrollingDisabled = overflow = this.disableScrolling();
+                scrollingDisabled = overflow = this.disableScrolling();
             }
         }
 
