@@ -332,7 +332,7 @@ ContextMenu.prototype.prepareCM = function() {
 ContextMenu.prototype.drawOverlay = function() {
     // make overlay visible
     this.overlay.style.visibility = "visible";
-}
+};
 
 ContextMenu.prototype.drawCM = function(pos) {
     // make CM visible on the calculated position
@@ -364,7 +364,7 @@ ContextMenu.prototype.prepareForClose = function(triggeredByRoot) {
     this.eventListenersToRemove.forEach(function(eventListener) {
         eventListener.t.removeEventListener(eventListener.e, eventListener.cb);
     });
-}
+};
 
 ContextMenu.prototype.close = function() {
     this.prepareForClose(true);
@@ -472,7 +472,7 @@ ContextSubMenu.prototype.init = function(parent, callee) {
     });
 
     return this;
-}
+};
 
 ContextSubMenu.prototype.close = function(triggeredByRoot) {
     // all the "clearing" stuff before close
@@ -598,4 +598,4 @@ ContextSubMenu.prototype.calculatePosition = function(li) {
         pos.y += document.documentElement.scrollTop;
 
         return pos;
-}
+};
