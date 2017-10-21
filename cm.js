@@ -188,7 +188,7 @@ ContextMenu.prototype.listenToCMClosed = function(callback) {
 
     // add previously defined event listeners
     this.eventListenersToRemove.forEach(function(eventListener) {
-        eventListener.t.addEventListener(eventListener.e, eventListener.cb);
+        eventListener.t.addEventListener(eventListener.e, eventListener.cb, false);
     });
 };
 
@@ -253,11 +253,11 @@ ContextMenu.prototype.prepareItems = function() {
                         this.openedCSM = item.function.init(this, node);
                     }
                 }, openDelay);
-            });
+            }, false);
 
             node.addEventListener("mouseleave", (event) => {
                 clearTimeout(this.timer);
-            });
+            }, false);
 
             // open CSM immidiatly
             node.addEventListener("mousedown", (event) => {
@@ -271,7 +271,7 @@ ContextMenu.prototype.prepareItems = function() {
                     this.openedCSM.close();
                     this.openedCSM = item.function.init(this, node);
                 }
-            });
+            }, false);
 
         // if the purpose of the item is to execute the given function
         } else {
@@ -279,18 +279,18 @@ ContextMenu.prototype.prepareItems = function() {
                 // close all the CMs and then execute the given function
                 this.getRoot().close();
                 item.function();
-            });
+            }, false);
         }
 
         // prevent CM close
         node.addEventListener("mousedown", (event) => {
             event.stopPropagation();
-        });
+        }, false);
 
         node.addEventListener("contextmenu", (event) => {
             event.stopPropagation();
             event.preventDefault();
-        });
+        }, false);
 
         return node;
     });
@@ -488,7 +488,7 @@ ContextSubMenu.prototype.close = function(triggeredByRoot) {
 
             this.cm.addEventListener("transitionend", (event) => {
                 this.cm.remove();
-            });
+            }, false);
         } else {
             this.cm.remove();
         }
@@ -554,7 +554,7 @@ ContextSubMenu.prototype.listenToCSMClosed = function(callback) {
 
     // add previously defined event listeners
     this.eventListenersToRemove.forEach((eventListener) => {
-        eventListener.t.addEventListener(eventListener.e, eventListener.f);
+        eventListener.t.addEventListener(eventListener.e, eventListener.fm, false);
     });
 };
 
