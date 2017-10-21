@@ -442,11 +442,8 @@ ContextSubMenu.prototype.init = function(parent, callee) {
     var pos = this.calculatePosition(callee);
     this.drawCM(pos); // from ContextMenu
 
-    // execute open callback if defined
-    var openCallback = this.getCallback("open");
-    if (openCallback) {
-        openCallback();
-    }
+    // execute open callback (or a blank function if none)
+    this.getCallback("open")();
 
     // execute callback when CSM close happened
     this.listenToCSMClosed((event) => {
@@ -455,11 +452,8 @@ ContextSubMenu.prototype.init = function(parent, callee) {
             // close CM (with nested)
             this.close();
 
-            // execute close callback if defined
-            var closeCallback = this.getCallback("close");
-            if (closeCallback) {
-                closeCallback();
-            }
+            // execute open callback (or a blank function if none)
+            this.getCallback("close")();
         }
     });
 
