@@ -75,23 +75,23 @@ ContextMenu._instances = [];
 ContextMenu.prototype.getCallback = function (after) {
     if ("callback" in this.params) {
         var callback = this.params.callback;
+
+        if (after === "open") {
+            if (typeof callback === "function") {
+                return callback;
+            }
+
+            if ("open" in callback && typeof callback.open === "function") {
+                return callback.open;
+            }
+        } else if (after === "close") {
+            if ("close" in callback && typeof callback.close === "function") {
+                return callback.close;
+            }
+        }
     }
 
-    if (after === "open") {
-        if (typeof callback === "function") {
-            return callback;
-        }
-
-        if ("open" in callback && typeof callback.open === "function") {
-            return callback.open;
-        }
-    } else if (after === "close") {
-        if ("close" in callback && typeof callback.close === "function") {
-            return callback.close;
-        }
-    }
-
-    return null;
+    return function() {};
 };
 
 ContextMenu.prototype.getRoot = function() {
