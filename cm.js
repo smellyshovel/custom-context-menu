@@ -75,8 +75,6 @@ ContextMenu._instances = [];
 ContextMenu.prototype.getCallback = function (after) {
     if ("callback" in this.params) {
         var callback = this.params.callback;
-    } else {
-        return null;
     }
 
     if (after === "open") {
@@ -87,13 +85,13 @@ ContextMenu.prototype.getCallback = function (after) {
         if ("open" in callback && typeof callback.open === "function") {
             return callback.open;
         }
-
-        return null;
     } else if (after === "close") {
         if ("close" in callback && typeof callback.close === "function") {
             return callback.close;
         }
     }
+
+    return null;
 };
 
 ContextMenu.prototype.getRoot = function() {
