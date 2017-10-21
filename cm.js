@@ -42,11 +42,8 @@ function ContextMenu(target, params) {
         var pos = this.calculatePosition(event);
         this.drawCM(pos);
 
-        // execute open callback if defined
-        var openCallback = this.getCallback("open");
-        if (openCallback) {
-            openCallback();
-        }
+        // execute open callback (or a blank function if none)
+        this.getCallback("open")();
 
         // execute callback when CM close happened
         this.listenToCMClosed((event) => {
@@ -58,11 +55,8 @@ function ContextMenu(target, params) {
                 this.enableScrolling(overflow);
             }
 
-            // execute close callback if defined
-            var closeCallback = this.getCallback("close");
-            if (closeCallback) {
-                closeCallback();
-            }
+            // execute close callback (or a blank function if none)
+            this.getCallback("close")();
         });
     });
 
