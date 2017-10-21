@@ -297,7 +297,7 @@ ContextMenu.prototype.prepareItems = function() {
 };
 
 ContextMenu.prototype.prepareCM = function() {
-    // creatie the CM element
+    // create the CM element
     this.cm = document.createElement("ol");
     // add data-cm for styling purposes
     this.cm.dataset["cm"] = this.params.id || "";
@@ -427,7 +427,7 @@ ContextSubMenu.prototype = Object.create(ContextMenu.prototype);
 // the differences in the logics between the ContextMenu and ContextSubMenu are
 // that all the "preparing" stuff for the ContextMenu happens right when the new
 // instance of it is created. But for the ContextSubMenu it happens in the
-// init() method which is called only when the CSM is going to opened.
+// init() method which is called only when the CSM is going to be opened.
 ContextSubMenu.prototype.init = function(parent, callee) {
     // the parent is the CM/CSM that has the "li" that opened this CSM
     this.parent = parent;
@@ -543,7 +543,7 @@ ContextSubMenu.prototype.listenToCSMClosed = function(callback) {
             }
         },
 
-        { // if mouse enters the CSM
+        { // if the mouse enters the CSM
             t: this.cm,
             e: "mouseenter",
             f: (event) => {
