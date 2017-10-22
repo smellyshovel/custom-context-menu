@@ -4,7 +4,7 @@
   "description": "A small (<2kB minified and gzipped) tool with no dependencies that helps you create custom rightclick context menues.",
   "keywords": ["context-menu","contextmenu", "right-click", "rightclick", "menu"],
   "repository": "https://github.com/smellyshovel/custom-context-menu",
-  "homepage": "https://smellyshovel/github.com/custom-context-menu",
+  "homepage": "https://smellyshovel.github.com/custom-context-menu",
   "bugs": "https://github.com/smellyshovel/custom-context-menu/issues",
   "author": "Matthew Mamonov <g.smellyshovel@gmail.com>",
   "license": "GPL-3.0"
