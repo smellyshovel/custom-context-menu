@@ -275,11 +275,16 @@ ContextMenu.prototype._prepareItems = function() {
 
         // if the purpose of the item is to execute the given function
         } else {
-            node.addEventListener("mouseup", (event) => {
-                // close all the CMs and then execute the given function
-                this._getRoot().close();
-                item.function();
-            }, false);
+            // this timeout is needed to prevent an item to be treated as
+            // "mouseupped" in case of random mouse movement right after
+            // the CM has been opened
+            setTimeout(() => {
+                node.addEventListener("mouseup", (event) => {
+                    // close all the CMs and then execute the given function
+                    this._getRoot().close();
+                    item.function();
+                }, false);
+            }, 100)
         }
 
         // prevent CM close
