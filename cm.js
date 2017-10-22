@@ -16,47 +16,47 @@ function ContextMenu(target, params) {
     this.params = params;
 
     // execute callback when CM invokation event happend
-    this.listenToCMInvoked(target, (event) => {
+    this._listenToCMInvoked(target, (event) => {
         // prevent global namespace polluting by multiple assignment
         var scrollingDisabled, overflow;
 
         // prepare and draw overlay if needed
         if (this.params.overlay) {
             // force disable scrolling if using an overlay
-            scrollingDisabled = overflow = this.disableScrolling();
+            scrollingDisabled = overflow = this._disableScrolling();
 
-            this.prepareOverlay();
-            this.drawOverlay();
+            this._prepareOverlay();
+            this._drawOverlay();
         } else {
             // disable scrolling unless it's not explicitly allowed
             if (!this.params.scrolling) {
-                scrollingDisabled = overflow = this.disableScrolling();
+                scrollingDisabled = overflow = this._disableScrolling();
             }
         }
 
         // prepare items and CM with this items
-        this.prepareItems();
-        this.prepareCM();
+        this._prepareItems();
+        this._prepareCM();
 
         // calculate the position of the CM and draw it there
-        var pos = this.calculatePosition(event);
-        this.drawCM(pos);
+        var pos = this._calculatePosition(event);
+        this._drawCM(pos);
 
         // execute open callback (or a blank function if none)
-        this.getCallback("open")();
+        this._getCallback("open")();
 
         // execute callback when CM close happened
-        this.listenToCMClosed((event) => {
+        this._listenToCMClosed((event) => {
             // close CM (with nested)
             this.close();
 
             // enable scrolling back
             if (scrollingDisabled) {
-                this.enableScrolling(overflow);
+                this._enableScrolling(overflow);
             }
 
             // execute close callback (or a blank function if none)
-            this.getCallback("close")();
+            this._getCallback("close")();
         });
     });
 
@@ -66,7 +66,7 @@ function ContextMenu(target, params) {
 
 ContextMenu._instances = [];
 
-ContextMenu.prototype.getCallback = function (after) {
+ContextMenu.prototype._getCallback = function (after) {
     if ("callback" in this.params) {
         var callback = this.params.callback;
 
@@ -88,16 +88,16 @@ ContextMenu.prototype.getCallback = function (after) {
     return function() {};
 };
 
-ContextMenu.prototype.getRoot = function() {
-      var parent = this;
-      while("parent" in parent) {
-          parent = parent.parent;
-      }
+ContextMenu.prototype._getRoot = function() {
+    var parent = this;
+    while("parent" in parent) {
+      parent = parent.parent;
+    }
 
-      return parent;
+    return parent;
 };
 
-ContextMenu.prototype.disableScrolling = function () {
+ContextMenu.prototype._disableScrolling = function () {
     // save the pravious state of overflow property
     var previousState = getComputedStyle(document.documentElement).overflow;
 
@@ -107,12 +107,12 @@ ContextMenu.prototype.disableScrolling = function () {
     return previousState;
 };
 
-ContextMenu.prototype.enableScrolling = function (state) {
+ContextMenu.prototype._enableScrolling = function (state) {
     // return the overflow property to the previous state
     document.documentElement.style.overflow = state;
 };
 
-ContextMenu.prototype.listenToCMInvoked = function(target, callback) {
+ContextMenu.prototype._listenToCMInvoked = function(target, callback) {
     target.addEventListener("contextmenu", (event) => {
         event.stopPropagation();
 
@@ -134,7 +134,7 @@ ContextMenu.prototype.listenToCMInvoked = function(target, callback) {
     }, false);
 };
 
-ContextMenu.prototype.listenToCMClosed = function(callback) {
+ContextMenu.prototype._listenToCMClosed = function(callback) {
     // allow using noRecreate param only for CMs with overlay
     var noRecreate = this.params.overlay && this.params.noRecreate;
 
@@ -192,7 +192,7 @@ ContextMenu.prototype.listenToCMClosed = function(callback) {
     });
 };
 
-ContextMenu.prototype.prepareOverlay = function() {
+ContextMenu.prototype._prepareOverlay = function() {
     // create the overlay element
     this.overlay = document.createElement("div");
     // add data-overlay-cm for styling purposes
@@ -216,7 +216,7 @@ ContextMenu.prototype.prepareOverlay = function() {
     document.body.appendChild(this.overlay);
 };
 
-ContextMenu.prototype.prepareItems = function() {
+ContextMenu.prototype._prepareItems = function() {
     // everything that is going to be rendered in the CM
     this.itemsToRender = this.params.items.map((item) => {
         if (item === "divider") {
@@ -243,14 +243,14 @@ ContextMenu.prototype.prepareItems = function() {
                 this.timer = setTimeout(() => {
                     if (!this.openedCSM) {
                         // open new CSM
-                        this.openedCSM = item.function.init(this, node);
+                        this.openedCSM = item.function._init(this, node);
 
                     // if CSM is already opened but mouse entered another item
                     // that is also opens a CSM
                     } else if (this.openedCSM !== item.function) {
                         // close existing CSM and open a new one
                         this.openedCSM.close();
-                        this.openedCSM = item.function.init(this, node);
+                        this.openedCSM = item.function._init(this, node);
                     }
                 }, openDelay);
             }, false);
@@ -264,12 +264,12 @@ ContextMenu.prototype.prepareItems = function() {
                 clearTimeout(this.timer);
 
                 if (!this.openedCSM) {
-                    this.openedCSM = item.function.init(this, node);
+                    this.openedCSM = item.function._init(this, node);
 
                 // unless event occurred on the same item again
                 } else if (this.openedCSM !== item.function) {
                     this.openedCSM.close();
-                    this.openedCSM = item.function.init(this, node);
+                    this.openedCSM = item.function._init(this, node);
                 }
             }, false);
 
@@ -277,7 +277,7 @@ ContextMenu.prototype.prepareItems = function() {
         } else {
             node.addEventListener("mouseup", (event) => {
                 // close all the CMs and then execute the given function
-                this.getRoot().close();
+                this._getRoot().close();
                 item.function();
             }, false);
         }
@@ -296,7 +296,7 @@ ContextMenu.prototype.prepareItems = function() {
     });
 };
 
-ContextMenu.prototype.prepareCM = function() {
+ContextMenu.prototype._prepareCM = function() {
     // create the CM element
     this.cm = document.createElement("ol");
     // add data-cm for styling purposes
@@ -314,19 +314,19 @@ ContextMenu.prototype.prepareCM = function() {
     });
 
     // render CM/CSM in the overlay if it presents or in the body if not
-    if (this.getRoot().overlay) {
-        this.getRoot().overlay.appendChild(this.cm);
+    if (this._getRoot().overlay) {
+        this._getRoot().overlay.appendChild(this.cm);
     } else {
         document.body.appendChild(this.cm);
     }
 };
 
-ContextMenu.prototype.drawOverlay = function() {
+ContextMenu.prototype._drawOverlay = function() {
     // make overlay visible
     this.overlay.style.visibility = "visible";
 };
 
-ContextMenu.prototype.drawCM = function(pos) {
+ContextMenu.prototype._drawCM = function(pos) {
     // make CM visible on the calculated position
     this.cm.style.left = pos.x + "px";
     this.cm.style.top = pos.y + "px";
@@ -336,7 +336,7 @@ ContextMenu.prototype.drawCM = function(pos) {
     this.cm.className = "visible";
 };
 
-ContextMenu.prototype.prepareForClose = function(triggeredByRoot) {
+ContextMenu.prototype._prepareForClose = function(triggeredByRoot) {
     // close opened CSM if any
     if (this.openedCSM) {
         this.openedCSM.close(triggeredByRoot);
@@ -359,7 +359,7 @@ ContextMenu.prototype.prepareForClose = function(triggeredByRoot) {
 };
 
 ContextMenu.prototype.close = function() {
-    this.prepareForClose(true);
+    this._prepareForClose(true);
 
     // remove the overlay if it's present else remove CM directly
     if (this.overlay) {
@@ -369,7 +369,7 @@ ContextMenu.prototype.close = function() {
     }
 };
 
-ContextMenu.prototype.calculatePosition = function(event) {
+ContextMenu.prototype._calculatePosition = function(event) {
     var viewportWidth = document.documentElement.clientWidth,
         viewportHeight = document.documentElement.clientHeight,
 
@@ -428,32 +428,32 @@ ContextSubMenu.prototype = Object.create(ContextMenu.prototype);
 // that all the "preparing" stuff for the ContextMenu happens right when the new
 // instance of it is created. But for the ContextSubMenu it happens in the
 // init() method which is called only when the CSM is going to be opened.
-ContextSubMenu.prototype.init = function(parent, callee) {
+ContextSubMenu.prototype._init = function(parent, callee) {
     // the parent is the CM/CSM that has the "li" that opened this CSM
     this.parent = parent;
     // the callee is the "li" element mentioned above
     this.callee = callee;
 
     // prepare items and CSM with this items
-    this.prepareItems(); // from ContextMenu
-    this.prepareCM(); // form ContextMenu
+    this._prepareItems(); // from ContextMenu
+    this._prepareCM(); // form ContextMenu
 
     // calculate the position of the CM and draw it there
-    var pos = this.calculatePosition(callee);
-    this.drawCM(pos); // from ContextMenu
+    var pos = this._calculatePosition(callee);
+    this._drawCM(pos); // from ContextMenu
 
     // execute open callback (or a blank function if none)
-    this.getCallback("open")();
+    this._getCallback("open")();
 
     // execute callback when CSM close happened
-    this.listenToCSMClosed((event) => {
+    this._listenToCSMClosed((event) => {
         // if the CSM was not closed already
         if (this.parent.openedCSM) {
             // close CM (with nested)
             this.close();
 
             // execute open callback (or a blank function if none)
-            this.getCallback("close")();
+            this._getCallback("close")();
         }
     });
 
@@ -462,7 +462,7 @@ ContextSubMenu.prototype.init = function(parent, callee) {
 
 ContextSubMenu.prototype.close = function(triggeredByRoot) {
     // all the "clearing" stuff before close
-    ContextMenu.prototype.prepareForClose.call(this);
+    ContextMenu.prototype._prepareForClose.call(this);
 
     // close CSM immidiatly if close was triggered by the root CM (specifically
     // the root CM close)
@@ -492,7 +492,7 @@ ContextSubMenu.prototype.close = function(triggeredByRoot) {
     this.parent.openedCSM = null;
 };
 
-ContextSubMenu.prototype.listenToCSMClosed = function(callback) {
+ContextSubMenu.prototype._listenToCSMClosed = function(callback) {
     // ensure that given param's type is number else make it equals zero
     var closeDelay = this.params.delay.close * 1000;
     closeDelay = (!Number.isNaN(closeDelay)) ? closeDelay : 0;
@@ -552,7 +552,7 @@ ContextSubMenu.prototype.listenToCSMClosed = function(callback) {
     });
 };
 
-ContextSubMenu.prototype.calculatePosition = function(li) {
+ContextSubMenu.prototype._calculatePosition = function(li) {
     var viewportWidth = document.documentElement.clientWidth,
         viewportHeight = document.documentElement.clientHeight,
 
