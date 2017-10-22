@@ -443,15 +443,7 @@ ContextSubMenu.prototype._init = function(parent, callee) {
     this._drawCM(pos); // from ContextMenu
 
     // execute open callback (or a blank function if none)
-<<<<<<< HEAD
     this._getCallback("open")();
-=======
-<<<<<<< HEAD
-    this.getCallback("open")();
-=======
-    this._getCallback("open")();
->>>>>>> refact
->>>>>>> devel
 
     // execute callback when CSM close happened
     this._listenToCSMClosed((event) => {
@@ -461,15 +453,7 @@ ContextSubMenu.prototype._init = function(parent, callee) {
             this.close();
 
             // execute open callback (or a blank function if none)
-<<<<<<< HEAD
             this._getCallback("close")();
-=======
-<<<<<<< HEAD
-            this.getCallback("close")();
-=======
-            this._getCallback("close")();
->>>>>>> refact
->>>>>>> devel
         }
     });
 
