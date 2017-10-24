@@ -2,24 +2,27 @@
     margin: 0;
     padding: 0;
     background-color: #fff;
-    border: 10px solid rgba(0, 0, 0, 0.6);
     border-radius: 1rem;
     list-style: none;
+    box-shadow: 0px 3px 5px #c9c9c9;
+    font-family: Helvetica;
+    font-size: 19px;
 }
 
-[data-item-cm = "tile-1"] {
-    padding: 0;
-    margin: 0;
-    padding: 1rem;
-    background-color: #947d7d;
+[data-cm = "tile-1"] [data-item-service-cm="divider"] {
+    border-bottom: 1px solid #e8e8e8;
+    margin: 0 0.5rem;
 }
 
-[data-item-cm = "tile-1"]:first-child {
-    border-top-left-radius: 1rem;
-    border-top-right-radius: 1rem;
+[data-cm = "tile-1"] li {
+    margin: 0.5rem;
+    padding: 0.5rem 1rem;
+    color: #424242;
+    border-radius: 5px;
+    cursor: default;
 }
 
-[data-item-cm = "tile-1"]:last-child {
-    margin: 0;
-    padding: 1rem;
+[data-cm = "tile-1"] li:hover {
+    background-color: #50b0e0;
+    color: #fff;
 }

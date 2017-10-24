@@ -1,6 +1,6 @@
 @font-face {
-    font-family: "Alex";
-    src: url("AlexDirte Brush Font.ttf") format("ttf");
+    font-family: TypoGraphica;
+    src: url("TypoGraphica.otf");
 }
 
 html {
@@ -12,16 +12,31 @@ body {
 }
 
 section.tile {
-    display: block;
-    min-height: 100vh;
+    display: flex;
 }
 
-.tile-view {
-    margin: auto;
-    display: block;
-    height: 100%;
+#tile-1 {
+    flex-flow: column nowrap;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    background-image: url('http://i.imgur.com/CuTMEuj.png');
 }
 
-#tile-1 .tile-view {
-    font-family: "Alex";
+#tile-1 h1 {
+    margin: 0;
+    color: #50b0e0;
+    text-align: center;
+    font-family: TypoGraphica;
+    font-size: 4rem;
+    font-weight: 100;
+}
+
+#tile-1 h2 {
+    margin: 0;
+    color: #8a8a8a;
+    text-align: center;
+    font-family: Helvetica;
+    font-size: 1rem;
+    font-weight: 100;
 }
