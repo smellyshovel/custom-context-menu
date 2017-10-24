@@ -36,13 +36,13 @@ new ContextMenu(document, {
             function: function() {
                 alert("It's alive!");
             },
+        }
 
-            "divider", // except of "special", ones
+        "divider", // except of "special", ones
 
-            {
-                title: "Another Menu Item", // the text of the item displayed on the page
-                function: makeSomethingAwesome // and a function that is gonna take place when the user picked an item
-            }
+        {
+            title: "Another Menu Item", // the text of the item displayed on the page
+            function: makeSomethingAwesome // and a function that is gonna take place when the user picked an item
         }
     ]
 });
