@@ -1,7 +1,14 @@
 # Custom Context Menu
-Easily create Custom Context Menues on your site using this little tool. No dependencies. Less than 2kB (gzipped and minified).
+Create custom styled, unlimited nested Context Menues on your site. _No dependencies. Less than 2kB (gzipped and minified)._
 
-## Installation
+## Content
+1. [Installation](#Installation)
+1. [Usage](#Usage)
+  * [Nested Context Menues](#Neted-Context-Menues)
+1. [Documentation](#Documentation)
+1. [Contribution](#Contribution)
+
+## [Installation](#Installation)
 1. Using the NPM or Yarn:
 
   ```bash
@@ -13,15 +20,15 @@ Easily create Custom Context Menues on your site using this little tool. No depe
 
 1. Standalone
 
-  Download the [preferable](https://github.com/smellyshovel/custom-context-menu/releases) version of this package and include the `cm.js` file as an external script:
+  Download the [preferable version](https://github.com/smellyshovel/custom-context-menu/releases) of this package and include the `cm.js` file as an external script:
 
   ```html
   <script src="cm.js"></script>
   ```
 
-## Usage
+## [Usage](#Usage)
 
-All you have to do in order to get your custom context menu working is just invoke the `new ContextMenu()` constructor passing to it the target element as a first argument and an object of parameters as a second one: -->
+All you have to do in order to get your custom context menu working is just invoke the `new ContextMenu()` constructor passing to it the target element as a first argument and an object of parameters as a second one:
 
 ```javascript
 new ContextMenu(document, {
@@ -69,6 +76,72 @@ fallbackContextMenu.close();
 
 Learn more about [`target`](#) and [`params`](#). There is also more about the [`items`](#).
 
-## Contribution
+### [Nested Context Menues](#Neted-Context-Menues)
+
+This tool allows you to create nested context menues. _Unlimited_ amount of nested context menues to be exact. All you have to do to make one menu item open another context menu is just make it's `function` propery equal to the `ContextSubMenu` instance:
+
+```javascript
+var subMenu = new ContextSubMenu({
+    // params
+});
+
+new ContextMenu(document, {
+    items: [
+        {
+            title: "Nested Context Menu",
+            function: subMenu// here is where the magic happens
+        }
+    ]
+});
+```
+
+or you can even invoke the constructor right on the fly:
+
+```javascript
+new ContextMenu(document, {
+    items: [
+        {
+            title: "Nested Context Menu",
+            function: new ContextSubMenu({
+                // params
+            })
+        }
+    ]
+});
+```
+
+The main difference between `ContextMenu` and `ContextSubMenu` constructors is that the first one takes 2 arguments, while the second one takes only one argument - the object, containing params for the submenu. This difference is due to the fact that we exactly know which element causes the submenu to be opened (we can't say the same about the "usual" context menu - the rightclick can happen anywhere on the page).
+
+Notice also, that the `ContextSubMenu` has it's own [list of params](#) (nevertheless some of them a common).
+
+Here is the other example. This time there is the submenu in the submenu. Take a look, everything is straitforward, just as you might have been expected:
+
+```javascript
+new ContextMenu(document, {
+    items: [
+        {
+            title: "Nested Context Menu",
+            function: new ContextSubMenu({
+                items: [
+                    {
+                        title: "Even deeper nested Context Menu",
+                        function: new ContextSubMenu({
+                            // params
+                        })
+                    }
+                ]
+            })
+        }
+    ]
+});
+```
+
+But don't forget the main rule: _do not make things more complicated than it's needed_. It's unlikely that the users of your site will thank you for the 10-level deep nesting of the context menu. By the way, ths doesn't even look pretty in the code, does it?
+
+## [Documentation](#Documentation)
+
+You can find all the [documentation](#) at this tool's site _(not yet to be honest)_. There you can learn everything from the target elements to the styling and animation.
+
+## [Contribution](#Contribution)
 
 I don't currently have any contribution manifest nor styleguides. Nevertheless, I'm open for any kind of contribution you can offer. So don't be shy to open an issue or to make a pull request :sparkles:. Also, you can always contact me if you are unsure about what you can do to make this project better.
