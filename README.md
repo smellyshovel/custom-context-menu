@@ -2,13 +2,13 @@
 Create custom styled, unlimited nested Context Menues on your site. _No dependencies. Less than 2kB (gzipped and minified)._
 
 ## Content
-1. [Installation](#Installation)
-1. [Usage](#Usage)
-  * [Nested Context Menues](#Neted-Context-Menues)
-1. [Documentation](#Documentation)
-1. [Contribution](#Contribution)
+1. [Installation](#installation)
+1. [Usage](#usage)
+    * [Nested Context Menues](#nested-context-menues)
+1. [Documentation](#documentation)
+1. [Contribution](#contribution)
 
-## [Installation](#Installation)
+## [Installation](#installation)
 1. Using the NPM or Yarn:
 
   ```bash
@@ -26,7 +26,7 @@ Create custom styled, unlimited nested Context Menues on your site. _No dependen
   <script src="cm.js"></script>
   ```
 
-## [Usage](#Usage)
+## [Usage](#usage)
 
 All you have to do in order to get your custom context menu working is just invoke the `new ContextMenu()` constructor passing to it the target element as a first argument and an object of parameters as a second one:
 
@@ -76,7 +76,7 @@ fallbackContextMenu.close();
 
 Learn more about [`target`](#) and [`params`](#). There is also more about the [`items`](#).
 
-### [Nested Context Menues](#Neted-Context-Menues)
+### [Nested Context Menues](#nested-context-menues)
 
 This tool allows you to create nested context menues. _Unlimited_ amount of nested context menues to be exact. All you have to do to make one menu item open another context menu is just make it's `function` propery equal to the `ContextSubMenu` instance:
 
@@ -138,10 +138,10 @@ new ContextMenu(document, {
 
 But don't forget the main rule: _do not make things more complicated than it's needed_. It's unlikely that the users of your site will thank you for the 10-level deep nesting of the context menu. By the way, ths doesn't even look pretty in the code, does it?
 
-## [Documentation](#Documentation)
+## [Documentation](#documentation)
 
 You can find all the [documentation](#) at this tool's site _(not yet to be honest)_. There you can learn everything from the target elements to the styling and animation.
 
-## [Contribution](#Contribution)
+## [Contribution](#contribution)
 
 I don't currently have any contribution manifest nor styleguides. Nevertheless, I'm open for any kind of contribution you can offer. So don't be shy to open an issue or to make a pull request :sparkles:. Also, you can always contact me if you are unsure about what you can do to make this project better.
