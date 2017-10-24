@@ -11,20 +11,20 @@ Create custom styled, unlimited nested Context Menues on your site. _No dependen
 ## [Installation](#installation)
 1. Using the NPM or Yarn:
 
-  ```bash
-  $ npm install custom-context-menu --save
-  ```
-  ```bash
-  $ yarn add custom-context-menu
-  ```
+    ```bash
+    $ npm install custom-context-menu --save
+    ```
+    ```bash
+    $ yarn add custom-context-menu
+    ```
 
 1. Standalone
 
-  Download the [preferable version](https://github.com/smellyshovel/custom-context-menu/releases) of this package and include the `cm.js` file as an external script:
+    Download the [preferable version](https://github.com/smellyshovel/custom-context-menu/releases) of this package and include the `cm.js` file as an external script:
 
-  ```html
-  <script src="cm.js"></script>
-  ```
+    ```html
+    <script src="cm.js"></script>
+    ```
 
 ## [Usage](#usage)
 
