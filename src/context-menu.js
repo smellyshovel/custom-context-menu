@@ -1,72 +1,112 @@
-const ContextMenu = function() {
+// basically this wrapper is necsessary only to enable strict mode
+const {ContextMenu, ContextMenuItem} = function() {
     "use strict";
 
     class ContextMenu {
         constructor(target, items, options, debug) {
-            // search for a CM already defined for this target
-            let alreadyDefined = ContextMenu._instances.find((instance) => {
-                return instance.target === target;
-            });
+            // creating a logger
+            this.logger = new ContextMenu.Logger(options.name, debug);
 
-            // return found one if any instead of creating a new one
+            this.logger.log("creating...");
+
+            // check target for errors. If there is a CM already defined for the same target then return a found instance instead of recreating the CM
+            let alreadyDefined = ContextMenu._checkTarget(this.logger, target);
             if (alreadyDefined) return alreadyDefined;
 
-            // getting logger instance
-            this.logger = new ContextMenu.Logger(options.name);
+            // check items
+            // ??? future structure of items is currently unknown
 
-            // check arguments before doing anything else
-            ContextMenu._checkArguments(this.logger, ...arguments);
+            // check options for unknown ones and proxy it
+            ContextMenu._checkOptions(this.logger, options);
+            options = ContextMenu._proxyOptions(this.logger, options);
 
-            //
+            // making target, items and options properties of a CM instance to have an access to them in methods
             this.target = target;
+            this.items = items;
+            this.options = options;
+
+            // freezing the instance to prevent changing of target
+            Object.freeze(this);
 
             // store this instance to prevent "recreating"
             ContextMenu._instances.push(this);
+
+            this.logger.log("created.")
         }
 
-        static _checkArguments(logger, target, items, options) {
-            let checkTarget = () => {
-                if (!(target instanceof HTMLDocument) && !(target instanceof HTMLElement)) {
-                    logger.error(this.Error.target.bad(target));
-                }
+        static _checkTarget(logger, target) {
+            // checking if target is instance of HTMLDocument or HTMLElement
+            if (!(target instanceof HTMLDocument) && !(target instanceof HTMLElement)) {
+                logger.error(M.target.bad(target));
             }
 
-            let checkItems = () => {
-                if (!Array.isArray(items)) {
-                    logger.error(this.Error.items.bad(items));
-                }
+            // checлing if there is a CM already defined for this target
+            let alreadyDefined = this._instances.find((instance) => {
+                return instance.target === target;
+            });
 
-                if (items.length > 0) {
-                    items.forEach((item, i) => {
-                        if (!(item instanceof ContextMenuItem)) {
-                            logger.error(this.Error.items.notAnItem(item, i));
-                        }
-                    });
-                }
+            // warn and return found one if any
+            if (alreadyDefined) {
+                logger.warn(M.target.alreadyDefined(target));
+                return alreadyDefined;
             }
+        }
 
-            let checkOptions = () => {
-                let knownOptions = ["name", "disabled", "defaultOnAlt", "overlay", "noRecreate", "scrolling", "transfer", "callback"];
+        static _checkOptions(logger, options) {
+            Object.keys(options).forEach((option) => {
+                if (!Object.keys(this._defaultOptions).includes(option)) {
+                    logger.warn(M.options.unknown(option));
+                }
+            });
+        }
 
-                Object.keys(options).forEach((option) => {
-                    if (!knownOptions.includes(option)) {
-                        logger.warn(this.Error.options.unknown(option));
-                        // delete options[option];
-                    }
-                });
-            }
+        static _proxyOptions(logger, options) {
+            // proxying is necessary to warn user in case of adding unknown option and to provide values for unspecified options
+            return new Proxy(options, {
+                get: (target, prop) => {
+                    return prop in target ? prop : this._defaultOptions[prop];
+                },
 
-            checkTarget();
-            checkItems();
-            if (options) checkOptions(options);
+                set: (target, prop, value) => {
+                    target[prop] = value;
+                    this._checkOptions(logger, target);
+                }
+            });
+        }
+
+        static get _defaultOptions() {
+            return {
+                name: "",
+                disabled: false,
+                defaultOnAlt: true,
+                overlay: true,
+                noRecreate: true,
+                scrolling: false,
+                transfer: true,
+                callback: {
+                    open() {},
+                    close() {}
+                }
+            };
         }
     }
 
     ContextMenu._instances = [];
 
     ContextMenu.Logger = class Logger {
-        constructor(contextMenuName) {
+        constructor(contextMenuName, debugEnabled) {
             this._name = contextMenuName;
+            this._allowed = debugEnabled;
+        }
+
+        static get _messages() {
+
+        }
+
+        log(msg) {
+            if (this._allowed) {
+                console.info(`${M.prefix.prefix} [${this.name}]: ${msg}`);
+            }
         }
 
         get name() {
@@ -74,30 +114,46 @@ const ContextMenu = function() {
         }
 
         warn(warning) {
-            console.warn(`${ContextMenu.Error.prefix.w} ${warning} [CM: ${this.name}]`);
+            console.warn(`${M.prefix.w} [${this.name}]: ${warning}`);
         }
 
         error(error) {
-            throw `${ContextMenu.Error.prefix.e} ${error} [CM: ${this.name}]`;
+            throw `${M.prefix.e} [${this.name}]: ${error}`;
         }
     }
 
-    ContextMenu.Error = {
+    ContextMenu.Logger.Messages = {
         prefix: {
             prefix: "Custom Context Menu",
 
             get e() {
-                return `${this.prefix} Error:`;
+                return `${this.prefix} Error`;
             },
 
             get w() {
-                return `${this.prefix} Warning:`;
+                return `${this.prefix} Warning`;
             }
         },
 
         target: {
             bad(given) {
                 return `target must be an instance of HTMLDocument or HTMLElement, but ${typeof given} is given`;
+            },
+
+            alreadyDefined(given) {
+                function getTagName() {
+                    if (given instanceof HTMLDocument) {
+                        return "document"
+                    } else {
+                        return `${given.tagName}#${given.id ? given.id : "[no-id]"}`;
+                    }
+                }
+
+                return `context menu for ${getTagName()} has already been defined. New instance was not created`
+            },
+
+            redefinition() {
+                return `a target can not be redefined`
             }
         },
 
@@ -107,7 +163,7 @@ const ContextMenu = function() {
             },
 
             notAnItem(given, index) {
-                return `each item must be an instance of ContextMenuItem, but the item #${index} is ${typeof given}`;
+                return `each item must be an instance of ContextMenuItem, but the item #${index + 1} is ${typeof given}. Ignoring`;
             }
         },
 
@@ -122,5 +178,10 @@ const ContextMenu = function() {
         }
     }
 
-    return ContextMenu;
+    class ContextMenuItem{}
+
+    // for shortness
+    const M = ContextMenu.Logger.Messages;
+
+    return {ContextMenu, ContextMenuItem};
 }();
