@@ -132,6 +132,9 @@ const {ContextMenu, ContextMenuItem} = function() {
         _open(event) {
             this._disableScrolling();
 
+            /*
+                !!! TODO: these 2 methods may probably be combined in one.
+            */
             this._prepareOverlay();
             this._drawOverlay();
 
@@ -150,6 +153,7 @@ const {ContextMenu, ContextMenuItem} = function() {
         _disableScrolling() {
             /*
                 Save the previous state of the CSS `overflow` property.
+                !!! TODO: No need in this. Test to ensure.
             */
             this._.originalOverflowState = getComputedStyle(document.documentElement).overflow;
 
@@ -160,22 +164,30 @@ const {ContextMenu, ContextMenuItem} = function() {
         }
 
         _prepareOverlay() {
-            // create the overlay element
+            /*
+                Create a div element with `data-cm-overlay` attribute the
+                value of which equals the `name` of the context menu.
+            */
             this._.overlay = document.createElement("div");
-            // add data-cm-overlay for styling purposes
             this._.overlay.dataset.cmOverlay = this.options.name;
 
-            let scrollLeft = document.documentElement.scrollLeft,
-                scrollTop = document.documentElement.scrollTop,
-                width = scrollLeft + document.documentElement.clientWidth,
-                height = scrollTop + document.documentElement.clientHeight;
+            /*
+                Calculate with and height of the overlay.
+                !!! TODO: 1000 is just placeholder. Have to be modified.
+            */
+            let width = 1000 + "px",
+                height = 1000 + "px";
 
-            // necsessary styles
+            /*
+                Set the necessary styles that are absolutely must be.
+                !!! TODO: should I use .cssText property to have an ability to
+                add "!important" to these ones?
+            */
             this._.overlay.style.position = "absolute";
             this._.overlay.style.display = "block";
             this._.overlay.style.left = 0; this._.overlay.style.top = 0;
-            this._.overlay.style.width = width + "px";
-            this._.overlay.style.height = height + "px";
+            this._.overlay.style.width = width;
+            this._.overlay.style.height = height;
             this._.overlay.style.visibility = "hidden";
             this._.overlay.style.zIndex = 2147483645;
 
