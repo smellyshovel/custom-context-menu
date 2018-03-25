@@ -129,10 +129,15 @@ const {ContextMenu, ContextMenuItem} = function() {
         }
 
         _disableScrolling() {
-            // save the pravious state of overflow property
-            var previousState = getComputedStyle(document.documentElement).overflow;
+            /*
+                Save the previous state of the CSS `overflow` property to return
+                it later.
+            */
+            let previousState = getComputedStyle(document.documentElement).overflow;
 
-            // disable scrolling via setting overflow to `hidden`
+            /*
+                Disable scrolling via setting overflow to `hidden`
+            */
             document.documentElement.style.overflow = "hidden";
 
             return previousState;
