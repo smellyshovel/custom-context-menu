@@ -182,6 +182,10 @@ const {ContextMenu, ContextMenuItem} = function() {
                 Set the necessary styles that are absolutely must be.
                 !!! TODO: should I use .cssText property to have an ability to
                 add "!important" to these ones?
+                !!! TODO: may be use `fixed` instead of `absolute`? But use
+                `absolute` for CM positioning. Must solve issue #3. I guess...
+                !!! TODO: is this case it may also possible to not disable
+                scrolling. But I'm unsure.
             */
             this._.overlay.style.position = "absolute";
             this._.overlay.style.display = "block";
