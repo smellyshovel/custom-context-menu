@@ -79,6 +79,8 @@ const {ContextMenu, ContextMenuItem} = function() {
                 tracking the ContextMenu closure.
             */
             this.target.addEventListener("contextmenu", (event) => {
+                this.logger.log("called.");
+
                 this._handleCallOpen(event);
                 this._registerCloseEventListener();
             });
@@ -91,22 +93,32 @@ const {ContextMenu, ContextMenuItem} = function() {
         }
 
         _handleCallOpen(event) {
-            this.logger.log("called.");
-
+            /*
+                Prevent opening of the context menues that are defined for those
+                elements that are below the `this.target` in the DOM.
+            */
             event.stopPropagation();
 
-            // if defaultOnAlt is true then check whether the alt key was not
-            // holded when the event was triggered or it was. If it was then the
-            // code below just won't be executed. But if defaultOnAlt is false,
-            // then just show a custom CM in any way
+            /*
+                If `defaultOnAlt` is `true` then check whether the alt key was not
+                holded when the event was triggered or if it was. If it was then
+                the code below just won't be executed, i.e. the default context
+                menu will appear. But if `defaultOnAlt` is `false`, then just
+                show a custom context menu in any way.
+            */
             if (this.options.defaultOnAlt ? event.altKey === false : true) {
-                // prevent default (browser) CM to appear
+                /*
+                    Prevent default (browser) context menu from appearing.
+                */
                 event.preventDefault();
 
+                /*
+                    Open the context menu if it's not `disabled`. Else just
+                    remind that it is.
+                */
                 if (this.options.disabled) {
                     this.logger.log("the context menu is disabled.");
                 } else {
-                    // open CM if it's not disabled
                     this._open(event);
                 }
             }
