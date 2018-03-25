@@ -4,34 +4,225 @@ const {ContextMenu, ContextMenuItem} = function() {
 
     class ContextMenu {
         constructor(target, items, options, debug) {
-            // creating a logger
+            /*
+                Each ContextMenu instance must have a separate logger because
+                the logger is allowed to log messages only if the `debug` option
+                is `true`. Creating a separate logger allows us to avoid passing
+                the value of the `debug` option from call to call so we can just
+                create an instance of logger passing the value of the `debug`
+                option only once and the logger will know whether it's possible
+                to log something or not.
+            */
             this.logger = new ContextMenu.Logger(options.name, debug);
 
+            /*
+                Here's an example. We just tell the logger what we need to log,
+                and it decides itself whether to actually log it.
+            */
             this.logger.log("creating...");
 
-            // check target for errors. If there is a CM already defined for the same target then return a found instance instead of recreating the CM
+            /*
+                Check target for errors. If there is a CM instance already
+                defined for the same target as the one that's being created now
+                then return a found instance instead of "recreating" the CM.
+            */
             let alreadyDefined = ContextMenu._checkTarget(this.logger, target);
             if (alreadyDefined) return alreadyDefined;
 
             // check items
-            // ??? future structure of items is currently unknown
+            // ??? the future structure of items is currently unknown
 
-            // check options for unknown ones and proxy it
+            /*
+                Check options for those that are unknown, then proxy the options
+                in order to track addition of new ones that are also might be
+                unknown. Moreover, the proxying solves the problem with
+                providing default valus for options.
+            */
             ContextMenu._checkOptions(this.logger, options);
             options = ContextMenu._proxyOptions(this.logger, options);
 
-            // making target, items and options properties of a CM instance to have an access to them in methods
+            /*
+                Making target, items and options to be properties of a CM
+                instance to have an access to them in methods and outside. This
+                provides a possibility to dinamically add new items and change
+                options.
+            */
             this.target = target;
             this.items = items;
             this.options = options;
 
-            // freezing the instance to prevent changing of target
+            /*
+                Freezing the instance to prevent target, items and options
+                redefinition, which may lead to multiple runtime errors and
+                other undesired behavior.
+            */
             Object.freeze(this);
 
-            // store this instance to prevent "recreating"
+            /*
+                Save the instance to prevent "recreating".
+            */
             ContextMenu._instances.push(this);
 
-            this.logger.log("created.")
+            /*
+                Registering the event listener that is responsible for tracking
+                the ContextMenu invokation.
+            */
+            this._registerOpenEventListener();
+
+            this.logger.log("created. Waiting for call...");
+        }
+
+        _registerOpenEventListener() {
+            this.target.addEventListener("contextmenu", (event) => {
+                this._handleCallOpen(event);
+                this._registerCloseEventListener();
+            });
+        }
+
+        _registerCloseEventListener() {
+            // allow using noRecreate param only for CMs with overlay
+            let noRecreate = this.options.overlay && this.options.noRecreate;
+
+            // store close event listeners as an array to easily remove them in #close()
+            if (noRecreate) {
+                this.eventListenersToRemove = [
+                    {
+                        t: document,
+                        e: "mousedown",
+                        cb: (event) => {
+                            if (event.which !== 3) {
+                                this._handleCallClose(event);
+                            }
+                        }
+                    },
+
+                    {
+                        t: this.overlay,
+                        e: "contextmenu",
+                        cb: (event) => {
+                            event.stopPropagation();
+                            event.preventDefault();
+
+                            this._handleCallClose(event);
+                        }
+                    }
+                ];
+            } else {
+                this.eventListenersToRemove = [
+                    {
+                        t: document,
+                        e: "mousedown",
+                        cb: (event) => {
+                            this._handleCallClose(event);
+                        }
+                    },
+                ];
+            }
+
+            // add keydown event either the CM has an overlay or not
+            this.eventListenersToRemove.push({
+                t: document,
+                e: "keydown",
+                cb: (event) => {
+                    if (event.keyCode === 27) {
+                        callback(event);
+                    }
+                }
+            });
+
+            // add previously defined event listeners
+            this.eventListenersToRemove.forEach((eventListener) => {
+                eventListener.t.addEventListener(eventListener.e, eventListener.cb);
+            });
+        }
+
+        _handleCallOpen(event) {
+            this.logger.log("called.");
+
+            event.stopPropagation();
+
+            // if defaultOnAlt is true then check whether the alt key was not
+            // holded when the event was triggered or it was. If it was then the
+            // code below just won't be executed. But if defaultOnAlt is false,
+            // then just show a custom CM in any way
+            if (this.options.defaultOnAlt ? event.altKey === false : true) {
+                // prevent default (browser) CM to appear
+                event.preventDefault();
+
+                if (this.options.disabled) {
+                    this.logger.log("the context menu is disabled.");
+                } else {
+                    // open CM if it's not disabled
+                    this._open(event);
+                }
+            }
+        }
+
+        _handleCallClose(event) {
+            // close CM (with nested)
+            this.close();
+
+            // enable scrolling back
+            if (scrollingDisabled) {
+                this._enableScrolling(overflow);
+            }
+
+            // execute close callback (or a blank function if none)
+            this._getCallback("close")();
+        }
+
+        _disableScrolling() {
+            // save the pravious state of overflow property
+            var previousState = getComputedStyle(document.documentElement).overflow;
+
+            // disable scrolling via setting overflow to `hidden`
+            document.documentElement.style.overflow = "hidden";
+
+            return previousState;
+        }
+
+        _open(event) {
+            // preventing global namespace pollution by multiple assignment
+            let scrollingDisabled, overflow;
+
+            // prepare and draw overlay if needed
+            if (this.options.overlay) {
+                // force disable scrolling if using an overlay
+                scrollingDisabled = overflow = this._disableScrolling();
+
+                this._prepareOverlay();
+                this._drawOverlay();
+            } else {
+                // disable scrolling unless it's not explicitly allowed
+                if (!this.options.scrolling) {
+                    scrollingDisabled = overflow = this._disableScrolling();
+                }
+            }
+
+            // prepare items and CM with this items
+            this._prepareItems();
+            this._prepareCM();
+
+            // calculate the position of the CM and draw it there
+            var pos = this._calculatePosition(event);
+            this._drawCM(pos);
+
+            // execute open callback (or a blank function if none)
+            this._getCallback("open")();
+
+            // execute callback when CM close happened
+            this._listenToCMClosed((event) => {
+                // close CM (with nested)
+                this.close();
+
+                // enable scrolling back
+                if (scrollingDisabled) {
+                    this._enableScrolling(overflow);
+                }
+
+                // execute close callback (or a blank function if none)
+                this._getCallback("close")();
+            });
         }
 
         static _checkTarget(logger, target) {
@@ -64,7 +255,7 @@ const {ContextMenu, ContextMenuItem} = function() {
             // proxying is necessary to warn user in case of adding unknown option and to provide values for unspecified options
             return new Proxy(options, {
                 get: (target, prop) => {
-                    return prop in target ? prop : this._defaultOptions[prop];
+                    return prop in target ? target[prop] : this._defaultOptions[prop];
                 },
 
                 set: (target, prop, value) => {
