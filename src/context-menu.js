@@ -73,6 +73,11 @@ const {ContextMenu, ContextMenuItem} = function() {
         }
 
         _registerOpenEventListener() {
+            /*
+                When the `contextmenu` event takes place, handle it first and
+                then register the event listener that is responsible for
+                tracking the ContextMenu closure.
+            */
             this.target.addEventListener("contextmenu", (event) => {
                 this._handleCallOpen(event);
                 this._registerCloseEventListener();
@@ -80,60 +85,9 @@ const {ContextMenu, ContextMenuItem} = function() {
         }
 
         _registerCloseEventListener() {
-            // allow using noRecreate param only for CMs with overlay
-            let noRecreate = this.options.overlay && this.options.noRecreate;
-
-            // store close event listeners as an array to easily remove them in #close()
-            if (noRecreate) {
-                this.eventListenersToRemove = [
-                    {
-                        t: document,
-                        e: "mousedown",
-                        cb: (event) => {
-                            if (event.which !== 3) {
-                                this._handleCallClose(event);
-                            }
-                        }
-                    },
-
-                    {
-                        t: this.overlay,
-                        e: "contextmenu",
-                        cb: (event) => {
-                            event.stopPropagation();
-                            event.preventDefault();
-
-                            this._handleCallClose(event);
-                        }
-                    }
-                ];
-            } else {
-                this.eventListenersToRemove = [
-                    {
-                        t: document,
-                        e: "mousedown",
-                        cb: (event) => {
-                            this._handleCallClose(event);
-                        }
-                    },
-                ];
-            }
-
-            // add keydown event either the CM has an overlay or not
-            this.eventListenersToRemove.push({
-                t: document,
-                e: "keydown",
-                cb: (event) => {
-                    if (event.keyCode === 27) {
-                        callback(event);
-                    }
-                }
-            });
-
-            // add previously defined event listeners
-            this.eventListenersToRemove.forEach((eventListener) => {
-                eventListener.t.addEventListener(eventListener.e, eventListener.cb);
-            });
+            // The `noRecreate` option is influential only if the ContextMenu
+            // uses an overlay.
+            // i'll deal with this one later, after dealing with opening
         }
 
         _handleCallOpen(event) {
@@ -159,16 +113,7 @@ const {ContextMenu, ContextMenuItem} = function() {
         }
 
         _handleCallClose(event) {
-            // close CM (with nested)
-            this.close();
-
-            // enable scrolling back
-            if (scrollingDisabled) {
-                this._enableScrolling(overflow);
-            }
-
-            // execute close callback (or a blank function if none)
-            this._getCallback("close")();
+            // later
         }
 
         _disableScrolling() {
