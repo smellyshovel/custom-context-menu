@@ -67,7 +67,7 @@ const {ContextMenu, ContextMenuItem} = function() {
                 redefinition, which may lead to multiple runtime errors and
                 other undesired behavior.
             */
-            Object.freeze(this.options);
+            Object.freeze(this);
 
             /*
                 Save the instance to prevent "recreating".
@@ -93,14 +93,8 @@ const {ContextMenu, ContextMenuItem} = function() {
                 this.logger.log("called.");
 
                 this._handleCallOpen(event);
-                this._registerCloseEventListener();
+                // this._registerCloseEventListener();
             });
-        }
-
-        _registerCloseEventListener() {
-            // The `noRecreate` option is influential only if the ContextMenu
-            // uses an overlay.
-            // i'll deal with this one later, after dealing with opening
         }
 
         _handleCallOpen(event) {
@@ -135,66 +129,11 @@ const {ContextMenu, ContextMenuItem} = function() {
             }
         }
 
-        _handleCallClose(event) {
-            // later
-        }
-
-        _disableScrolling() {
-            /*
-                Save the previous state of the CSS `overflow` property to return
-                it later.
-            */
-            let previousState = getComputedStyle(document.documentElement).overflow;
-
-            /*
-                Disable scrolling via setting `overflow` to `hidden`.
-            */
-            document.documentElement.style.overflow = "hidden";
-
-            return previousState;
-        }
-
-        _prepareOverlay() {
-            // create the overlay element
-            this._overlay = document.createElement("div");
-            // add data-overlay-cm for styling purposes
-            this.overlay.dataset.overlayCm = this.params.id || "";
-
-            var scrollLeft = document.documentElement.scrollLeft,
-                scrollTop = document.documentElement.scrollTop,
-                width = scrollLeft + document.documentElement.clientWidth,
-                height = scrollTop + document.documentElement.clientHeight;
-
-            // necsessary styles
-            this.overlay.style.position = "absolute";
-            this.overlay.style.display = "block";
-            this.overlay.style.left = 0; this.overlay.style.top = 0;
-            this.overlay.style.width = width + "px";
-            this.overlay.style.height = height + "px";
-            this.overlay.style.visibility = "hidden";
-            this.overlay.style.zIndex = 2147483645;
-
-            // append invisible overlay to the body
-            document.body.appendChild(this.overlay);
-        }
-
         _open(event) {
-            // preventing global namespace pollution by multiple assignment
-            let scrollingDisabled, overflow;
+            this._disableScrolling();
 
-            // prepare and draw overlay if needed
-            if (this.options.overlay) {
-                // force disable scrolling if using an overlay
-                scrollingDisabled = overflow = this._disableScrolling();
-
-                this._prepareOverlay();
-                this._drawOverlay();
-            } else {
-                // disable scrolling unless it's not explicitly allowed
-                if (!this.options.scrolling) {
-                    scrollingDisabled = overflow = this._disableScrolling();
-                }
-            }
+            this._prepareOverlay();
+            this._drawOverlay();
 
             // prepare items and CM with this items
             this._prepareItems();
@@ -206,21 +145,48 @@ const {ContextMenu, ContextMenuItem} = function() {
 
             // execute open callback (or a blank function if none)
             this._getCallback("open")();
-
-            // execute callback when CM close happened
-            this._listenToCMClosed((event) => {
-                // close CM (with nested)
-                this.close();
-
-                // enable scrolling back
-                if (scrollingDisabled) {
-                    this._enableScrolling(overflow);
-                }
-
-                // execute close callback (or a blank function if none)
-                this._getCallback("close")();
-            });
         }
+
+        _disableScrolling() {
+            /*
+                Save the previous state of the CSS `overflow` property.
+            */
+            this._.originalOverflowState = getComputedStyle(document.documentElement).overflow;
+
+            /*
+                Disable scrolling via setting `overflow` to `hidden`.
+            */
+            document.documentElement.style.overflow = "hidden";
+        }
+
+        _prepareOverlay() {
+            // create the overlay element
+            this._.overlay = document.createElement("div");
+            // add data-cm-overlay for styling purposes
+            this._.overlay.dataset.cmOverlay = this.options.name;
+
+            let scrollLeft = document.documentElement.scrollLeft,
+                scrollTop = document.documentElement.scrollTop,
+                width = scrollLeft + document.documentElement.clientWidth,
+                height = scrollTop + document.documentElement.clientHeight;
+
+            // necsessary styles
+            this._.overlay.style.position = "absolute";
+            this._.overlay.style.display = "block";
+            this._.overlay.style.left = 0; this._.overlay.style.top = 0;
+            this._.overlay.style.width = width + "px";
+            this._.overlay.style.height = height + "px";
+            this._.overlay.style.visibility = "hidden";
+            this._.overlay.style.zIndex = 2147483645;
+
+            // append invisible _.overlay to the body
+            document.body.appendChild(this._.overlay);
+        }
+
+        _drawOverlay() {
+            // make overlay visible
+            this._.overlay.style.visibility = "visible";
+        };
 
         static _checkTarget(logger, target) {
             // checking if target is instance of HTMLDocument or HTMLElement
@@ -267,9 +233,7 @@ const {ContextMenu, ContextMenuItem} = function() {
                 name: "",
                 disabled: false,
                 defaultOnAlt: true,
-                overlay: true,
                 noRecreate: true,
-                scrolling: false,
                 transfer: true,
                 callback: {
                     open() {},
