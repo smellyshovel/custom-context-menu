@@ -52,11 +52,22 @@ const {ContextMenu, ContextMenuItem} = function() {
             this.options = options;
 
             /*
+                All the properties that are created asyncronously must be
+                predefined, because we won't be able to define new properties
+                after freezing the instance. However, due to the freezing we
+                won't also be able to redefine existing properties. So we need
+                only one predefined object in which we'll store all the
+                asyncronously created properties, becase the freezing affects
+                only one level, so the `_` object will act like unfrozen one.
+            */
+            this._ = {};
+
+            /*
                 Freezing the instance to prevent target, items and options
                 redefinition, which may lead to multiple runtime errors and
                 other undesired behavior.
             */
-            Object.freeze(this);
+            Object.freeze(this.options);
 
             /*
                 Save the instance to prevent "recreating".
@@ -136,11 +147,35 @@ const {ContextMenu, ContextMenuItem} = function() {
             let previousState = getComputedStyle(document.documentElement).overflow;
 
             /*
-                Disable scrolling via setting overflow to `hidden`
+                Disable scrolling via setting `overflow` to `hidden`.
             */
             document.documentElement.style.overflow = "hidden";
 
             return previousState;
+        }
+
+        _prepareOverlay() {
+            // create the overlay element
+            this._overlay = document.createElement("div");
+            // add data-overlay-cm for styling purposes
+            this.overlay.dataset.overlayCm = this.params.id || "";
+
+            var scrollLeft = document.documentElement.scrollLeft,
+                scrollTop = document.documentElement.scrollTop,
+                width = scrollLeft + document.documentElement.clientWidth,
+                height = scrollTop + document.documentElement.clientHeight;
+
+            // necsessary styles
+            this.overlay.style.position = "absolute";
+            this.overlay.style.display = "block";
+            this.overlay.style.left = 0; this.overlay.style.top = 0;
+            this.overlay.style.width = width + "px";
+            this.overlay.style.height = height + "px";
+            this.overlay.style.visibility = "hidden";
+            this.overlay.style.zIndex = 2147483645;
+
+            // append invisible overlay to the body
+            document.body.appendChild(this.overlay);
         }
 
         _open(event) {
