@@ -1,5 +1,5 @@
 // basically this wrapper is necsessary only to enable strict mode
-const {ContextMenu, ContextMenuItem} = function() {
+const ContextMenu = function() {
     "use strict";
 
     class ContextMenu {
@@ -133,13 +133,21 @@ const {ContextMenu, ContextMenuItem} = function() {
             /*
                 Render an overlay. The overlay is used to track the context menu
                 closure and also acts as sort of a grouping element.
+                !!! TODO: may be it's better not to use `_` at all but to pass
+                overlay, items, etc. as formal parameters?
             */
             this._renderOverlay();
 
-            // // prepare items and CM with this items
-            // this._prepareItems();
-            // this._prepareCM();
-            //
+            /*
+                !!! TODO: may be `_constructItemElements`?
+            */
+            this._constructItems();
+
+            /*
+
+            */
+            this._prepareCM();
+
             // // calculate the position of the CM and draw it there
             // var pos = this._calculatePosition(event);
             // this._drawCM(pos);
@@ -176,6 +184,16 @@ const {ContextMenu, ContextMenuItem} = function() {
                 Instert overlay to the body.
             */
             document.body.appendChild(this._.overlay);
+        }
+
+        _constructItems() {
+            this._.itemsToRender = this.items.map((item) => {
+                return new ContextMenu.Item(item, this)
+            });
+        }
+
+        _prepareCM() {
+            
         }
 
         static _checkTarget(logger, target) {
@@ -320,10 +338,51 @@ const {ContextMenu, ContextMenuItem} = function() {
         }
     }
 
-    class ContextMenuItem{}
+    ContextMenu.Item = class Item {
+        constructor(descr, contextMenu) {
+            this._buildNode(descr);
 
-    // for shortness
+            return this._node;
+        }
+
+        _buildNode(descr) {
+            if (typeof descr === "object") {
+                let text = document.createTextNode(descr.title);
+                this._node = document.createElement("li");
+
+                this._node.dataset.cmItem = "";
+                this._node.appendChild(text);
+
+                this._registerActionEventListener(descr.action);
+            } else if (typeof descr === "string") {
+                let type = ContextMenu.Item._specialItems[descr];
+                this._node = document.createElement(type);
+
+                this._node.dataset.cmItem = descr;
+            }
+        }
+
+        _registerActionEventListener(action) {
+            this._node.addEventListener("mouseup", (event) => {
+                // close all the CMs and then execute the given function
+                action();
+            }, false);
+        }
+
+        static get _specialItems() {
+            return {
+                separator: "div"
+            }
+        }
+    }
+
+    /*
+        In order to be able to get acces to messages simply by accessing `M`
+        instead of passing the full path `ContextMenu.Logger.Messages`.
+        !!! TODO: may be `Messages` should become a static method of the
+        `ContextMenu.Logger`?
+    */
     const M = ContextMenu.Logger.Messages;
 
-    return {ContextMenu, ContextMenuItem};
+    return ContextMenu;
 }();
