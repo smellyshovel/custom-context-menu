@@ -154,9 +154,11 @@ const ContextMenu = function() {
             */
             this._prepareCM();
 
-            // // calculate the position of the CM and draw it there
-            // var pos = this._calculatePosition(event);
-            // this._drawCM(pos);
+            // add navigation events here? key down, key up, left, right, enter, etc...
+
+            // calculate the position of the CM and draw it there
+            let pos = this._calculatePosition(event);
+            this._drawCM(pos);
             //
             // // execute open callback (or a blank function if none)
             // this._getCallback("open")();
@@ -185,7 +187,6 @@ const ContextMenu = function() {
                                             width: 100vw !important;\
                                             height: 100vh !important;";
 
-
             /*
                 Instert overlay to the body.
             */
@@ -199,7 +200,73 @@ const ContextMenu = function() {
         }
 
         _prepareCM() {
+            // create the CM element
+            this._.cm = document.createElement("ol");
+            // add data-cm for styling purposes
+            this._.cm.dataset.cm = this.options.name;
 
+            // necsessary styles
+            this._.cm.style.cssText = "position: absolute !important;\
+                                            disaply: block !important;\
+                                            visibility: hidden !important;";
+
+            // make every item the child of the CM
+            this._.itemsToRender.forEach((item) => {
+                this._.cm.appendChild(item);
+            });
+
+            this._.overlay.appendChild(this._.cm);
+        }
+
+        _drawCM(pos) {
+            console.log(pos);
+            // make CM visible on the calculated position
+            this._.cm.style.left = pos.x + "px";
+            this._.cm.style.top = pos.y + "px";
+            this._.cm.style.visibility = "visible";
+
+            // add className for css transitions and animations
+            this._.cm.className = "visible";
+        };
+
+        _calculatePosition(event) {
+            var viewportWidth = this._.overlay.getBoundingClientRect().width,
+                viewportHeight = this._.overlay.getBoundingClientRect().height,
+
+                clickedX = (event.clientX > viewportWidth) ? viewportWidth : event.clientX,
+                clickedY = (event.clientY > viewportHeight) ? viewportHeight : event.clientY,
+
+                cmWidth = this._.cm.getBoundingClientRect().width,
+                cmHeight = this._.cm.getBoundingClientRect().height,
+
+                // furthest means the point that is opposite to the one FROM which the
+                // CM will be rendered
+                furthestX = clickedX + cmWidth,
+                furthestY = clickedY + cmHeight,
+
+                pos = {x: clickedX, y: clickedY};
+
+            if (furthestX > viewportWidth) {
+                if (this.options.transfer) {
+                    pos.x -= cmWidth;
+                } else {
+                    pos.x = viewportWidth - cmWidth;
+                }
+            }
+
+            if (furthestY > viewportHeight) {
+                if (this.options.transfer) {
+                    pos.y -= cmHeight;
+                } else {
+                   pos.y = viewportHeight - cmHeight;
+               }
+            }
+
+            // bear in mind that page could be scrolled
+            pos.x += document.documentElement.scrollLeft;
+            pos.y += document.documentElement.scrollTop;
+
+            return pos;
         }
 
         static _checkTarget(logger, target) {
