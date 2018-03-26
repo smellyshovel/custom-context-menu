@@ -130,40 +130,30 @@ const {ContextMenu, ContextMenuItem} = function() {
         }
 
         _open(event) {
-            this._disableScrolling();
-
             /*
-                !!! TODO: these 2 methods may probably be combined in one.
+                Render an overlay. The overlay is used to track the context menu
+                closure and also acts as sort of a grouping element.
             */
-            this._prepareOverlay();
-            this._drawOverlay();
+            this._renderOverlay();
 
-            // prepare items and CM with this items
-            this._prepareItems();
-            this._prepareCM();
-
-            // calculate the position of the CM and draw it there
-            var pos = this._calculatePosition(event);
-            this._drawCM(pos);
-
-            // execute open callback (or a blank function if none)
-            this._getCallback("open")();
+            // // prepare items and CM with this items
+            // this._prepareItems();
+            // this._prepareCM();
+            //
+            // // calculate the position of the CM and draw it there
+            // var pos = this._calculatePosition(event);
+            // this._drawCM(pos);
+            //
+            // // execute open callback (or a blank function if none)
+            // this._getCallback("open")();
         }
 
-        _disableScrolling() {
-            /*
-                Save the previous state of the CSS `overflow` property.
-                !!! TODO: No need in this. Test to ensure.
-            */
-            this._.originalOverflowState = getComputedStyle(document.documentElement).overflow;
-
+        _renderOverlay() {
             /*
                 Disable scrolling via setting `overflow` to `hidden`.
             */
             document.documentElement.style.overflow = "hidden";
-        }
 
-        _prepareOverlay() {
             /*
                 Create a div element with `data-cm-overlay` attribute the
                 value of which equals the `name` of the context menu.
@@ -173,30 +163,20 @@ const {ContextMenu, ContextMenuItem} = function() {
 
             /*
                 Set the necessary styles that are absolutely must be.
-                !!! TODO: should I use .cssText property to have an ability to
-                add "!important" to these ones?
-                !!! TODO: may be use `fixed` instead of `absolute`? But use
-                `absolute` for CM positioning. Must solve issue #3. I guess...
-                !!! TODO: in this case it may also be feasible not to disable
-                scrolling. But I'm unsure.
             */
             this._.overlay.style.cssText = "position: fixed !important;\
-                                      disaply: block !important;\
-                                      left: 0 !important;\
-                                      top: 0 !important;\
-                                      width: 100vw !important;\
-                                      height: 100vh !important;\
-                                      visibility: visible !important;\
-                                      zIndex: 100000 !important;";
+                                            disaply: block !important;\
+                                            left: 0 !important;\
+                                            top: 0 !important;\
+                                            width: 100vw !important;\
+                                            height: 100vh !important;";
 
-            // append invisible _.overlay to the body
+
+            /*
+                Instert overlay to the body.
+            */
             document.body.appendChild(this._.overlay);
         }
-
-        _drawOverlay() {
-            // make overlay visible
-            // this._.overlay.style.visibility = "visible";
-        };
 
         static _checkTarget(logger, target) {
             // checking if target is instance of HTMLDocument or HTMLElement
