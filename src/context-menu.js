@@ -13,7 +13,11 @@ const ContextMenu = function() {
                 option only once and the logger will know whether it's possible
                 to log something or not.
             */
-            this.logger = new ContextMenu.Logger(options.name, debug);
+            try {
+                this.logger = new ContextMenu.Logger(options.name, debug);
+            } catch (e) {
+                this.logger = new ContextMenu.Logger("", debug);
+            }
 
             /*
                 Here's an example. We just tell the logger what we need to log,
@@ -29,8 +33,10 @@ const ContextMenu = function() {
             let alreadyDefined = ContextMenu._checkTarget(this.logger, target);
             if (alreadyDefined) return alreadyDefined;
 
-            // check items
-            // ??? the future structure of items is currently unknown
+            /*
+                Check items for errors.
+            */
+            ContextMenu._checkItems(this.logger, items);
 
             /*
                 Check options for those that are unknown, then proxy the options
@@ -193,28 +199,83 @@ const ContextMenu = function() {
         }
 
         _prepareCM() {
-            
+
         }
 
         static _checkTarget(logger, target) {
-            // checking if target is instance of HTMLDocument or HTMLElement
-            if (!(target instanceof HTMLDocument) && !(target instanceof HTMLElement)) {
+            /*
+                Checking if target is instance of HTMLElement.
+            */
+            if (!(target instanceof HTMLElement)) {
                 logger.error(M.target.bad(target));
             }
 
-            // checлing if there is a CM already defined for this target
+            /*
+                Checking if there is an already defined for this target context
+                menu.
+            */
             let alreadyDefined = this._instances.find((instance) => {
                 return instance.target === target;
             });
 
-            // warn and return found one if any
+            /*
+                Warn and return a found one if any.
+            */
             if (alreadyDefined) {
                 logger.warn(M.target.alreadyDefined(target));
                 return alreadyDefined;
             }
         }
 
+        static _checkItems(logger, items) {
+            /*
+                Checking if items is an array.
+            */
+            if (!(Array.isArray(items))) {
+                logger.error(M.items.bad(items));
+            }
+
+            items.forEach((item, i) => {
+                if (typeof item === "object") {
+                    if (!("title" in item) || !("action" in item)) {
+                        /*
+                            If items is object, but this object lacks necessary
+                            properties.
+                        */
+                        logger.error(M.items.missSmtn(i));
+                    }
+                } else if (typeof item === "string") {
+                    if (!(item in ContextMenu.Item._specialItems)) {
+                        /*
+                            If items is string, but this string represents
+                            unknown special item.
+                        */
+                        logger.error(M.items.unknownSpecial(item, i));
+                    }
+                } else {
+                    /*
+                        If items is neither object nor string.
+                    */
+                    logger.error(M.items.notAnItem(item, i));
+                }
+            });
+        }
+
         static _checkOptions(logger, options) {
+            /*
+                Checking if options is passed to the ContextMenu constructor and
+                that it's an object (but not an array). I wanted initially to
+                make options an optional parameter, but it seems like there's no
+                way to do so.
+            */
+            if (typeof options !== "object" && !Array.isArray(options)) {
+                logger.error(M.options.bad(options));
+            }
+
+            /*
+                Here we know for sure that options is the object. So check this
+                object for unknown options and warn about any found one.
+            */
             Object.keys(options).forEach((option) => {
                 if (!Object.keys(this._defaultOptions).includes(option)) {
                     logger.warn(M.options.unknown(option));
@@ -223,7 +284,10 @@ const ContextMenu = function() {
         }
 
         static _proxyOptions(logger, options) {
-            // proxying is necessary to warn user in case of adding unknown option and to provide values for unspecified options
+            /*
+                Proxying is necessary to warn user in case of adding an unknown
+                option and to provide values for unspecified ones.
+            */
             return new Proxy(options, {
                 get: (target, prop) => {
                     return prop in target ? target[prop] : this._defaultOptions[prop];
@@ -297,7 +361,7 @@ const ContextMenu = function() {
 
         target: {
             bad(given) {
-                return `target must be an instance of HTMLDocument or HTMLElement, but ${typeof given} is given`;
+                return `target must be an HTMLElement instance, but ${typeof given} is given`;
             },
 
             alreadyDefined(given) {
@@ -322,12 +386,24 @@ const ContextMenu = function() {
                 return `items must be an array, but ${typeof given} is given`;
             },
 
+            missSmtn(index) {
+                return `each item represented by an object must contain "title" and "action" properties, but the item #${index + 1} seems to miss something`
+            },
+
+            unknownSpecial(given, index) {
+                return `unknown special item "${given}" (#${index + 1})`
+            },
+
             notAnItem(given, index) {
-                return `each item must be an instance of ContextMenuItem, but the item #${index + 1} is ${typeof given}. Ignoring`;
+                return `each item must be an object or a string, but the item #${index + 1} is ${typeof given}`;
             }
         },
 
         options: {
+            bad(given) {
+                return `options must be an object, but ${typeof given === "object" ? "array" : typeof given} is given`
+            },
+
             unknown(given) {
                 return `unknown option "${given}". Will be ignored. Refer to the documentation to find a list of all the available options`;
             },
