@@ -172,28 +172,22 @@ const {ContextMenu, ContextMenuItem} = function() {
             this._.overlay.dataset.cmOverlay = this.options.name;
 
             /*
-                Calculate with and height of the overlay.
-                !!! TODO: 1000 is just placeholder. Have to be modified.
-            */
-            let width = 1000 + "px",
-                height = 1000 + "px";
-
-            /*
                 Set the necessary styles that are absolutely must be.
                 !!! TODO: should I use .cssText property to have an ability to
                 add "!important" to these ones?
                 !!! TODO: may be use `fixed` instead of `absolute`? But use
                 `absolute` for CM positioning. Must solve issue #3. I guess...
-                !!! TODO: is this case it may also possible to not disable
+                !!! TODO: in this case it may also be feasible not to disable
                 scrolling. But I'm unsure.
             */
-            this._.overlay.style.position = "absolute";
-            this._.overlay.style.display = "block";
-            this._.overlay.style.left = 0; this._.overlay.style.top = 0;
-            this._.overlay.style.width = width;
-            this._.overlay.style.height = height;
-            this._.overlay.style.visibility = "hidden";
-            this._.overlay.style.zIndex = 2147483645;
+            this._.overlay.style.cssText = "position: fixed !important;\
+                                      disaply: block !important;\
+                                      left: 0 !important;\
+                                      top: 0 !important;\
+                                      width: 100vw !important;\
+                                      height: 100vh !important;\
+                                      visibility: visible !important;\
+                                      zIndex: 100000 !important;";
 
             // append invisible _.overlay to the body
             document.body.appendChild(this._.overlay);
@@ -201,7 +195,7 @@ const {ContextMenu, ContextMenuItem} = function() {
 
         _drawOverlay() {
             // make overlay visible
-            this._.overlay.style.visibility = "visible";
+            // this._.overlay.style.visibility = "visible";
         };
 
         static _checkTarget(logger, target) {
