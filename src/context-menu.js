@@ -142,7 +142,7 @@ const ContextMenu = function() {
                 !!! TODO: may be it's better not to use `_` at all but to pass
                 overlay, items, etc. as formal parameters?
             */
-            this._renderOverlayInvisible();
+            this._renderOverlay();
 
             /*
                 Build items DOM elements from the `items` array.
@@ -153,7 +153,7 @@ const ContextMenu = function() {
                 Render the invisible context menu in the top left corner of the
                 page.
             */
-            this._renderInvisible();
+            this._render();
 
             // add navigation events here? key down, key up, left, right, enter, etc...
 
@@ -162,14 +162,22 @@ const ContextMenu = function() {
             */
             this._determinePosition(event);
 
+            /*
+                Set the correct context menu position.
+            */
+            this._setPosition();
 
-            this._drawCM();
-            //
+            /*
+                Mark the overlay and the context menu as visible.
+            */
+            this._.overlay.className = "visible";
+            this._.cm.className = "visible";
+            
             // // execute open callback (or a blank function if none)
             // this._getCallback("open")();
         }
 
-        _renderOverlayInvisible() {
+        _renderOverlay() {
             /*
                 Disable scrolling via setting `overflow` to `hidden`.
             */
@@ -190,8 +198,7 @@ const ContextMenu = function() {
                                             left: 0 !important;\
                                             top: 0 !important;\
                                             width: 100vw !important;\
-                                            height: 100vh !important;\
-                                            visibility: hidden !important;";
+                                            height: 100vh !important;";
 
             /*
                 Instert overlay to the body.
@@ -205,7 +212,7 @@ const ContextMenu = function() {
             });
         }
 
-        _renderInvisible() {
+        _render() {
             /*
                 Create a div element with `data-cm` attribute the value of which
                 equals the `name` of the context menu.
@@ -219,8 +226,7 @@ const ContextMenu = function() {
             this._.cm.style.cssText = "position: absolute !important;\
                                        display: block !important;\
                                        left: 0 !important;\
-                                       top: 0 !important;\
-                                       visibility: hidden !important;";
+                                       top: 0 !important;";
 
             /*
                 Create a list which will hold all the items of the context menu.
@@ -244,16 +250,6 @@ const ContextMenu = function() {
             */
             this._.overlay.appendChild(this._.cm);
         }
-
-        _drawCM() {
-            // make CM visible on the calculated position
-            this._.cm.style.left = this._.position.x + "px";
-            this._.cm.style.top = this._.position.y + "px";
-            this._.cm.style.visibility = "visible";
-
-            // add className for css transitions and animations
-            this._.cm.className = "visible";
-        };
 
         _determinePosition(event) {
                 /*
@@ -309,6 +305,11 @@ const ContextMenu = function() {
                     this._.position.y = viewportHeight - cmHeight;
                }
             }
+        }
+
+        _setPosition() {
+            this._.cm.style.left = this._.position.x + "px";
+            this._.cm.style.top = this._.position.y + "px";
         }
 
         static _checkTarget(logger, target) {
