@@ -551,10 +551,19 @@ const ContextMenu = function() {
         }
 
         _registerActionEventListener(action) {
-            this._node.addEventListener("mouseup", (event) => {
-                // close all the CMs and then execute the given function
-                action();
-            }, false);
+            /*
+                Threshold in 200ms is necessary to avoid "falsy" action
+                triggering.
+            */
+            setTimeout(() => {
+                this._node.addEventListener("mouseup", (event) => {
+                    this._handleCallAction(action);
+                });
+            }, 200);
+        }
+
+        _handleCallAction(action) {
+            action();
         }
 
         static get _specialItems() {
