@@ -170,9 +170,8 @@ const ContextMenu = function() {
             /*
                 Mark the overlay and the context menu as visible.
             */
-            this._.overlay.className = "visible";
-            this._.cm.className = "visible";
-            
+            this._markAsVisible();
+
             // // execute open callback (or a blank function if none)
             // this._getCallback("open")();
         }
@@ -310,6 +309,11 @@ const ContextMenu = function() {
         _setPosition() {
             this._.cm.style.left = this._.position.x + "px";
             this._.cm.style.top = this._.position.y + "px";
+        }
+
+        _markAsVisible() {
+            this._.overlay.className = "visible";
+            this._.cm.className = "visible";
         }
 
         static _checkTarget(logger, target) {
