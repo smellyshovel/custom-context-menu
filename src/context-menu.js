@@ -142,17 +142,18 @@ const ContextMenu = function() {
                 !!! TODO: may be it's better not to use `_` at all but to pass
                 overlay, items, etc. as formal parameters?
             */
-            this._renderOverlay();
+            this._renderOverlayInvisible();
 
             /*
                 !!! TODO: may be `_constructItemElements`?
             */
-            this._constructItems();
+            this._buildItemElements();
 
             /*
-
+                Render the invisible context menu in the top left corner of the
+                page.
             */
-            this._prepareCM();
+            this._renderInvisible();
 
             // add navigation events here? key down, key up, left, right, enter, etc...
 
@@ -164,7 +165,7 @@ const ContextMenu = function() {
             // this._getCallback("open")();
         }
 
-        _renderOverlay() {
+        _renderOverlayInvisible() {
             /*
                 Disable scrolling via setting `overflow` to `hidden`.
             */
@@ -181,11 +182,12 @@ const ContextMenu = function() {
                 Set the necessary styles that are absolutely must be.
             */
             this._.overlay.style.cssText = "position: fixed !important;\
-                                            disaply: block !important;\
+                                            display: block !important;\
                                             left: 0 !important;\
                                             top: 0 !important;\
                                             width: 100vw !important;\
-                                            height: 100vh !important;";
+                                            height: 100vh !important;\
+                                            visibility: hidden !important;";
 
             /*
                 Instert overlay to the body.
@@ -193,35 +195,56 @@ const ContextMenu = function() {
             document.body.appendChild(this._.overlay);
         }
 
-        _constructItems() {
+        _buildItemElements() {
             this._.itemsToRender = this.items.map((item) => {
                 return new ContextMenu.Item(item, this)
             });
         }
 
-        _prepareCM() {
-            // create the CM element
-            this._.cm = document.createElement("ol");
-            // add data-cm for styling purposes
+        _renderInvisible() {
+            /*
+                Create a div element with `data-cm` attribute the value of which
+                equals the `name` of the context menu.
+            */
+            this._.cm = document.createElement("div");
             this._.cm.dataset.cm = this.options.name;
 
-            // necsessary styles
+            /*
+                Set the necessary styles that are absolutely must be.
+            */
             this._.cm.style.cssText = "position: absolute !important;\
-                                            disaply: block !important;\
-                                            visibility: hidden !important;";
+                                       display: block !important;\
+                                       left: 0 !important;\
+                                       top: 0 !important;\
+                                       visibility: hidden !important;";
 
-            // make every item the child of the CM
+            /*
+                Create a list which will hold all the items of the context menu.
+            */
+            let list = document.createElement("ol");
+
+            /*
+                Populate the list with items.
+            */
             this._.itemsToRender.forEach((item) => {
-                this._.cm.appendChild(item);
+                list.appendChild(item);
             });
 
+            /*
+                Insert the list inside the context menu.
+            */
+            this._.cm.appendChild(list);
+
+            /*
+                Insert the context menu inside the overlay.
+            */
             this._.overlay.appendChild(this._.cm);
         }
 
-        _drawCM(pos) {
+        _drawCM({x, y}) {
             // make CM visible on the calculated position
-            this._.cm.style.left = pos.x + "px";
-            this._.cm.style.top = pos.y + "px";
+            this._.cm.style.left = x + "px";
+            this._.cm.style.top = y + "px";
             this._.cm.style.visibility = "visible";
 
             // add className for css transitions and animations
