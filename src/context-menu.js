@@ -145,7 +145,7 @@ const ContextMenu = function() {
             this._renderOverlayInvisible();
 
             /*
-                !!! TODO: may be `_constructItemElements`?
+                Build items DOM elements from the `items` array.
             */
             this._buildItemElements();
 
@@ -157,9 +157,13 @@ const ContextMenu = function() {
 
             // add navigation events here? key down, key up, left, right, enter, etc...
 
-            // calculate the position of the CM and draw it there
-            let pos = this._determinePosition(event);
-            this._drawCM(pos);
+            /*
+                Determine where on the page the context menu must appear.
+            */
+            this._determinePosition(event);
+
+
+            this._drawCM();
             //
             // // execute open callback (or a blank function if none)
             // this._getCallback("open")();
@@ -241,10 +245,10 @@ const ContextMenu = function() {
             this._.overlay.appendChild(this._.cm);
         }
 
-        _drawCM({x, y}) {
+        _drawCM() {
             // make CM visible on the calculated position
-            this._.cm.style.left = x + "px";
-            this._.cm.style.top = y + "px";
+            this._.cm.style.left = this._.position.x + "px";
+            this._.cm.style.top = this._.position.y + "px";
             this._.cm.style.visibility = "visible";
 
             // add className for css transitions and animations
@@ -276,13 +280,13 @@ const ContextMenu = function() {
                     "Furthest" means the bottom right point of the context menu.
                 */
                 furthestX = clickedX + cmWidth,
-                furthestY = clickedY + cmHeight,
+                furthestY = clickedY + cmHeight;
 
                 /*
                     The resulting position is initially equal to the coordinates
                     where the click happened.
                 */
-                pos = {x: clickedX, y: clickedY};
+                this._.position = {x: clickedX, y: clickedY};
 
             /*
                 But if it's obvious that the context menu won't fit on the page,
@@ -292,29 +296,19 @@ const ContextMenu = function() {
             */
             if (furthestX > viewportWidth) {
                 if (this.options.transfer === "both" || this.options.transfer === "x") {
-                    pos.x -= cmWidth;
+                    this._.position.x -= cmWidth;
                 } else {
-                    pos.x = viewportWidth - cmWidth;
+                    this._.position.x = viewportWidth - cmWidth;
                 }
             }
 
             if (furthestY > viewportHeight) {
                 if (this.options.transfer === "both" || this.options.transfer === "y") {
-                    pos.y -= cmHeight;
+                    this._.position.y -= cmHeight;
                 } else {
-                   pos.y = viewportHeight - cmHeight;
+                    this._.position.y = viewportHeight - cmHeight;
                }
             }
-
-            /*
-                The resulting `pos` object's `x` property represents a point
-                on the `x` axis from which a context menu will be rendered (i.e
-                the context menu's top left coordinate). It's always equals
-                `event.clientX` except for those cases when a click happend as
-                far to the right so the context menu won't fit on the page. The
-                same applies to the `y` propery.
-            */
-            return pos;
         }
 
         static _checkTarget(logger, target) {
