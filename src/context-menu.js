@@ -206,7 +206,7 @@ const ContextMenu = function() {
         }
 
         _buildItemElements() {
-            this._.itemsToRender = this.items.map((item) => {
+            this._.itemElements = this.items.map((item) => {
                 return new ContextMenu.Item(item, this)
             });
         }
@@ -235,7 +235,7 @@ const ContextMenu = function() {
             /*
                 Populate the list with items.
             */
-            this._.itemsToRender.forEach((item) => {
+            this._.itemElements.forEach((item) => {
                 list.appendChild(item);
             });
 
