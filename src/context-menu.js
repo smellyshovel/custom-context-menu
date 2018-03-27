@@ -99,7 +99,7 @@ const ContextMenu = function() {
                 this.logger.log("called.");
 
                 this._handleCallOpen(event);
-                // this._registerCloseEventListener();
+                this._registerCloseEventListener();
             });
         }
 
@@ -133,6 +133,63 @@ const ContextMenu = function() {
                     this._open(event);
                 }
             }
+        }
+
+        _registerCloseEventListener() {
+            if (this.options.noRecreate) {
+                this._.closeEventListeners = [
+                    {
+                        t: this._.overlay,
+                        e: "mousedown",
+                        cb: (event) => {
+                            if (event.which !== 3) {
+                                this.close();
+                            }
+                        }
+                    },
+
+                    {
+                        t: this._.overlay,
+                        e: "contextmenu",
+                        cb: (event) => {
+                            event.stopPropagation();
+                            event.preventDefault();
+
+                            // to prevent closure on menu KEY. But may probably be solved by setting focus on the first item.
+                            if (!this.options.closeOnKey ? event.which !== 0 : true) {
+                                this.close();
+                            }
+                        }
+                    }
+                ];
+            } else {
+                this._.closeEventListeners = [
+                    {
+                        t: document,
+                        e: "mousedown",
+                        cb: (event) => {
+                            this.close();
+                        }
+                    },
+                ];
+            }
+
+            // add keydown event either the CM has an overlay or not
+            this._.closeEventListeners.push({
+                    t: document,
+                    e: "keydown",
+                    cb: (event) => {
+                        if (event.keyCode === 27) {
+                            this.close();
+                        }
+                    }
+                }
+            );
+
+            // add previously defined event listeners
+            this._.closeEventListeners.forEach(function(eventListener) {
+                eventListener.t.addEventListener(eventListener.e, eventListener.cb, false);
+            });
         }
 
         _open(event) {
@@ -197,7 +254,8 @@ const ContextMenu = function() {
                                             left: 0 !important;\
                                             top: 0 !important;\
                                             width: 100vw !important;\
-                                            height: 100vh !important;";
+                                            height: 100vh !important;\
+                                            pointer-events: auto !important";
 
             /*
                 Instert overlay to the body.
@@ -316,6 +374,19 @@ const ContextMenu = function() {
             this._.cm.className = "visible";
         }
 
+        close() {
+            /*
+                Restore the initial `overflow` value.
+            */
+            document.documentElement.style.overflow = "";
+
+            this._.closeEventListeners.forEach((eventListener) => {
+                eventListener.t.removeEventListener(eventListener.e, eventListener.cb);
+            });
+
+            this._.overlay.remove();
+        }
+
         static _checkTarget(logger, target) {
             /*
                 Checking if target is instance of HTMLElement.
@@ -419,6 +490,7 @@ const ContextMenu = function() {
                 name: "",
                 disabled: false,
                 defaultOnAlt: true,
+                closeOnKey: false,
                 noRecreate: true,
                 transfer: "y",
                 callback: {
@@ -560,6 +632,15 @@ const ContextMenu = function() {
                     this._handleCallAction(action);
                 });
             }, 200);
+
+            this._node.addEventListener("mousedown", (event) => {
+                event.stopPropagation();
+            });
+
+            this._node.addEventListener("contextmenu", (event) => {
+                event.stopPropagation();
+                event.preventDefault();
+            });
         }
 
         _handleCallAction(action) {
