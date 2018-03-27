@@ -438,7 +438,73 @@ const ContextMenu = function() {
         }
 
         static get _messages() {
+            return {
+                prefix: {
+                    prefix: "Custom Context Menu",
 
+                    get e() {
+                        return `${this.prefix} Error`;
+                    },
+
+                    get w() {
+                        return `${this.prefix} Warning`;
+                    }
+                },
+
+                target: {
+                    bad(given) {
+                        return `target must be an HTMLElement instance, but ${typeof given} is given`;
+                    },
+
+                    alreadyDefined(given) {
+                        function getTagName() {
+                            if (given instanceof HTMLDocument) {
+                                return "document"
+                            } else {
+                                return `${given.tagName}#${given.id ? given.id : "[no-id]"}`;
+                            }
+                        }
+
+                        return `context menu for ${getTagName()} has already been defined. New instance was not created`
+                    },
+
+                    redefinition() {
+                        return `a target can not be redefined`
+                    }
+                },
+
+                items: {
+                    bad(given) {
+                        return `items must be an array, but ${typeof given} is given`;
+                    },
+
+                    missSmtn(index) {
+                        return `each item represented by an object must contain "title" and "action" properties, but the item #${index + 1} seems to miss something`
+                    },
+
+                    unknownSpecial(given, index) {
+                        return `unknown special item "${given}" (#${index + 1})`
+                    },
+
+                    notAnItem(given, index) {
+                        return `each item must be an object or a string, but the item #${index + 1} is ${typeof given}`;
+                    }
+                },
+
+                options: {
+                    bad(given) {
+                        return `options must be an object, but ${typeof given === "object" ? "array" : typeof given} is given`
+                    },
+
+                    unknown(given) {
+                        return `unknown option "${given}". Will be ignored. Refer to the documentation to find a list of all the available options`;
+                    },
+
+                    badName(given) {
+                        return `the given name "${given}" of ${typeof given} type can not be converted to string via the standard toString() method. Ignoring`;
+                    }
+                }
+            };
         }
 
         log(msg) {
@@ -457,74 +523,6 @@ const ContextMenu = function() {
 
         error(error) {
             throw `${M.prefix.e} [${this.name}]: ${error}`;
-        }
-    }
-
-    ContextMenu.Logger.Messages = {
-        prefix: {
-            prefix: "Custom Context Menu",
-
-            get e() {
-                return `${this.prefix} Error`;
-            },
-
-            get w() {
-                return `${this.prefix} Warning`;
-            }
-        },
-
-        target: {
-            bad(given) {
-                return `target must be an HTMLElement instance, but ${typeof given} is given`;
-            },
-
-            alreadyDefined(given) {
-                function getTagName() {
-                    if (given instanceof HTMLDocument) {
-                        return "document"
-                    } else {
-                        return `${given.tagName}#${given.id ? given.id : "[no-id]"}`;
-                    }
-                }
-
-                return `context menu for ${getTagName()} has already been defined. New instance was not created`
-            },
-
-            redefinition() {
-                return `a target can not be redefined`
-            }
-        },
-
-        items: {
-            bad(given) {
-                return `items must be an array, but ${typeof given} is given`;
-            },
-
-            missSmtn(index) {
-                return `each item represented by an object must contain "title" and "action" properties, but the item #${index + 1} seems to miss something`
-            },
-
-            unknownSpecial(given, index) {
-                return `unknown special item "${given}" (#${index + 1})`
-            },
-
-            notAnItem(given, index) {
-                return `each item must be an object or a string, but the item #${index + 1} is ${typeof given}`;
-            }
-        },
-
-        options: {
-            bad(given) {
-                return `options must be an object, but ${typeof given === "object" ? "array" : typeof given} is given`
-            },
-
-            unknown(given) {
-                return `unknown option "${given}". Will be ignored. Refer to the documentation to find a list of all the available options`;
-            },
-
-            badName(given) {
-                return `the given name "${given}" of ${typeof given} type can not be converted to string via the standard toString() method. Ignoring`;
-            }
         }
     }
 
@@ -568,11 +566,9 @@ const ContextMenu = function() {
 
     /*
         In order to be able to get acces to messages simply by accessing `M`
-        instead of passing the full path `ContextMenu.Logger.Messages`.
-        !!! TODO: may be `Messages` should become a static method of the
-        `ContextMenu.Logger`?
+        instead of passing the full path `ContextMenu.Logger._messages`.
     */
-    const M = ContextMenu.Logger.Messages;
+    const M = ContextMenu.Logger._messages;
 
     return ContextMenu;
 }();
