@@ -160,14 +160,46 @@ const ContextMenu = function() {
                                 this.close();
                             }
                         }
-                    }
+                    },
                 ];
             } else {
                 this._.closeEventListeners = [
                     {
-                        t: document,
+                        t: this._.overlay,
                         e: "mousedown",
                         cb: (event) => {
+                            if (event.which !== 3) {
+                                this.close();
+                            }
+                        }
+                    },
+
+                    {
+                        t: this._.overlay,
+                        e: "contextmenu",
+                        cb: (event) => {
+                            event.preventDefault();
+
+                            // to prevent closure on menu KEY. But may probably be solved by setting focus on the first item.
+                            if (event.which === 0) {
+                                if (this.options.closeOnKey) {
+                                    event.stopPropagation();
+                                    this.close();
+                                } else {
+                                    event.stopPropagation();
+                                }
+                            } else {
+                                this.close();
+                            }
+                        }
+                    },
+
+                    {
+                        t: this._.cm,
+                        e: "contextmenu",
+                        cb: (event) => {
+                            event.stopPropagation();
+                            event.preventDefault();
                             this.close();
                         }
                     },
