@@ -257,8 +257,10 @@ const ContextMenu = function() {
             */
             this._markAsVisible();
 
-            // // execute open callback (or a blank function if none)
-            // this._getCallback("open")();
+            /*
+                Execute open callback.
+            */
+            this.options.callback.open.call(this);
         }
 
         _renderOverlay() {
@@ -293,7 +295,7 @@ const ContextMenu = function() {
 
         _buildItemElements() {
             this._.itemElements = this.items.map((item) => {
-                return new ContextMenu.Item(item, this)
+                return new ContextMenu.Item(item, this);
             });
         }
 
@@ -419,6 +421,11 @@ const ContextMenu = function() {
                 context menu together with it's event listeners.
             */
             this._.overlay.remove();
+
+            /*
+                Execute close callback.
+            */
+            this.options.callback.close.call(this);
         }
 
         static _checkTarget(logger, target) {
@@ -455,10 +462,10 @@ const ContextMenu = function() {
             }
 
             items.forEach((item, i) => {
-                if (typeof item === "object") {
+                if (typeof item === "object" && item !== null) {
                     if (!("title" in item) || !("action" in item)) {
                         /*
-                            If items is object, but this object lacks necessary
+                            If item is object, but this object lacks necessary
                             properties.
                         */
                         logger.error(M.items.missSmtn(i));
@@ -466,7 +473,7 @@ const ContextMenu = function() {
                 } else if (typeof item === "string") {
                     if (!(item in ContextMenu.Item._specialItems)) {
                         /*
-                            If items is string, but this string represents
+                            If item is string, but this string represents
                             unknown special item.
                         */
                         logger.error(M.items.unknownSpecial(item, i));
