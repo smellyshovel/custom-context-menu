@@ -136,92 +136,88 @@ const ContextMenu = function() {
         }
 
         _registerCloseEventListener() {
+            /*
+                We need 2 sets of different event listeners to track the conetxt
+                menu closure. The first one is used if the `noRecreate` option
+                is `true` and the second one when not.
+            */
             if (this.options.noRecreate) {
-                this._.closeEventListeners = [
-                    {
-                        t: this._.overlay,
-                        e: "mousedown",
-                        cb: (event) => {
-                            if (event.which !== 3) {
-                                this.close();
-                            }
-                        }
-                    },
+                /*
+                    Here we listen to the rightclick anywhere "above" the
+                    overlay. This event listener is also responsible for hitting
+                    the menu key, so we chicking the `closeOnKey` option's state
+                    as well.
+                */
+                this._.overlay.addEventListener("contextmenu", (event) => {
+                    event.stopPropagation();
+                    event.preventDefault();
 
-                    {
-                        t: this._.overlay,
-                        e: "contextmenu",
-                        cb: (event) => {
-                            event.stopPropagation();
-                            event.preventDefault();
-
-                            // to prevent closure on menu KEY. But may probably be solved by setting focus on the first item.
-                            if (!this.options.closeOnKey ? event.which !== 0 : true) {
-                                this.close();
-                            }
-                        }
-                    },
-                ];
+                    if (!this.options.closeOnKey ? event.which !== 0 : true) {
+                        this.close();
+                    }
+                });
             } else {
-                this._.closeEventListeners = [
-                    {
-                        t: this._.overlay,
-                        e: "mousedown",
-                        cb: (event) => {
-                            if (event.which !== 3) {
-                                this.close();
-                            }
-                        }
-                    },
+                /*
+                    The same applies here, but we should remeber that the
+                    context menu must be recreated if the closure was triggered
+                    via the rightclick.
+                */
+                this._.overlay.addEventListener("contextmenu", (event) => {
+                    event.preventDefault();
 
-                    {
-                        t: this._.overlay,
-                        e: "contextmenu",
-                        cb: (event) => {
-                            event.preventDefault();
-
-                            // to prevent closure on menu KEY. But may probably be solved by setting focus on the first item.
-                            if (event.which === 0) {
-                                if (this.options.closeOnKey) {
-                                    event.stopPropagation();
-                                    this.close();
-                                } else {
-                                    event.stopPropagation();
-                                }
-                            } else {
-                                this.close();
-                            }
-                        }
-                    },
-
-                    {
-                        t: this._.cm,
-                        e: "contextmenu",
-                        cb: (event) => {
+                    if (event.which === 0) {
+                        if (this.options.closeOnKey) {
                             event.stopPropagation();
-                            event.preventDefault();
                             this.close();
+                        } else {
+                            event.stopPropagation();
                         }
-                    },
-                ];
+                    } else {
+                        this.close();
+                    }
+                });
+
+                /*
+                    This one is necessary to close the context menu if the
+                    rightclick happened on the context menu, but not the
+                    overlay. If we omit this, then the context menu will be
+                    recreated in that point where the rightclick happened even
+                    if it happened on the context menu itself.
+                */
+                this._.cm.addEventListener("contextmenu", (event) => {
+                    event.stopPropagation();
+                    event.preventDefault();
+                    this.close();
+                });
             }
 
-            // add keydown event either the CM has an overlay or not
-            this._.closeEventListeners.push({
-                    t: document,
-                    e: "keydown",
-                    cb: (event) => {
-                        if (event.keyCode === 27) {
-                            this.close();
-                        }
-                    }
+            /*
+                Besides those 2 we also need these 2 that are applied in any way
+                not depending on the `noRecreate` option's state. `mousedown`
+                tracks any kind of click except for the rightclick, because this
+                one is being tracked by the appropriate `contextmenu` event
+                listener.
+            */
+            this._.overlay.addEventListener("mousedown", (event) => {
+                if (event.which !== 3) {
+                    this.close();
                 }
-            );
-
-            // add previously defined event listeners
-            this._.closeEventListeners.forEach(function(eventListener) {
-                eventListener.t.addEventListener(eventListener.e, eventListener.cb, false);
             });
+
+            /*
+                Here we define a callback function that is called when the
+                `keydown` event takes place. We save in order to remove it later
+                in #close method because if we don't do so, then this event
+                listener will continue to live even after the context menu has
+                been closed.
+            */
+            this._.escKeyEventCallback = (event) => {
+                if (event.keyCode === 27) {
+                    this.close();
+                }
+            };
+
+            document.addEventListener("keydown", this._.escKeyEventCallback);
         }
 
         _open(event) {
@@ -412,10 +408,16 @@ const ContextMenu = function() {
             */
             document.documentElement.style.overflow = "";
 
-            this._.closeEventListeners.forEach((eventListener) => {
-                eventListener.t.removeEventListener(eventListener.e, eventListener.cb);
-            });
+            /*
+                Removing the escape key down event listener to avoid it
+                triggering after the context menu becomes actually closed.
+            */
+            document.removeEventListener("keydown", this._.escKeyEventCallback);
 
+            /*
+                Removing the overlay means removing all the fottprints of the
+                context menu together with it's event listeners.
+            */
             this._.overlay.remove();
         }
 
