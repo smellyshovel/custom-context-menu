@@ -294,8 +294,8 @@ const ContextMenu = function() {
         }
 
         _buildItemElements() {
-            this._.itemElements = this.items.map((item) => {
-                return new ContextMenu.Item(item, this);
+            this._.itemElements = this.items.map((item, i) => {
+                return new ContextMenu.Item(item, i, this);
             });
         }
 
@@ -592,11 +592,11 @@ const ContextMenu = function() {
                     },
 
                     missSmtn(index) {
-                        return `each item represented by an object must contain "title" and "action" properties, but the item #${index + 1} seems to miss something`
+                        return `each item represented by an object must contain "title" and "action" properties, but the item #${index + 1} seems to miss something`;
                     },
 
                     unknownSpecial(given, index) {
-                        return `unknown special item "${given}" (#${index + 1})`
+                        return `unknown special item "${given}" (#${index + 1})`;
                     },
 
                     notAnItem(given, index) {
@@ -606,7 +606,7 @@ const ContextMenu = function() {
 
                 options: {
                     bad(given) {
-                        return `options must be an object, but ${typeof given === "object" ? "array" : typeof given} is given`
+                        return `options must be an object, but ${typeof given === "object" ? "array" : typeof given} is given`;
                     },
 
                     unknown(given) {
@@ -615,6 +615,12 @@ const ContextMenu = function() {
 
                     badName(given) {
                         return `the given name "${given}" of ${typeof given} type can not be converted to string via the standard toString() method. Ignoring`;
+                    }
+                },
+
+                runtime: {
+                    badAction(given, index) {
+                        return `each item's action must be a function, but the action of the item #${index + 1} is ${typeof given}`;
                     }
                 }
             };
@@ -640,8 +646,9 @@ const ContextMenu = function() {
     }
 
     ContextMenu.Item = class Item {
-        constructor(descr, contextMenu) {
+        constructor(descr, index, contextMenu) {
             this.descr = descr;
+            this.index = index;
             this.cm = contextMenu;
 
             this._buildNode();
@@ -681,7 +688,12 @@ const ContextMenu = function() {
             */
             setTimeout(() => {
                 this._node.addEventListener("mouseup", (event) => {
-                    this.descr.action.call(this.cm);
+                    try {
+                        this.descr.action.call(this.cm);
+                    } catch (e) {
+                        this.cm.logger.error(M.runtime.badAction(this.descr.action, this.index))
+                    }
+
                     this.cm.close();
                 });
             }, 200);
@@ -691,7 +703,6 @@ const ContextMenu = function() {
 
         _registerBehaviorEventListener() {
             this._node.addEventListener("mousedown", (event) => {
-                console.log("here");
                 event.stopPropagation();
             });
 
