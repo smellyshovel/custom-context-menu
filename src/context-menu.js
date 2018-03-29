@@ -641,40 +641,57 @@ const ContextMenu = function() {
 
     ContextMenu.Item = class Item {
         constructor(descr, contextMenu) {
-            this._buildNode(descr);
+            this.descr = descr;
+            this.cm = contextMenu;
+
+            this._buildNode();
 
             return this._node;
         }
 
-        _buildNode(descr) {
-            if (typeof descr === "object") {
-                let text = document.createTextNode(descr.title);
-                this._node = document.createElement("li");
-
-                this._node.dataset.cmItem = "";
-                this._node.appendChild(text);
-
-                this._registerActionEventListener(descr.action);
-            } else if (typeof descr === "string") {
-                let type = ContextMenu.Item._specialItems[descr];
-                this._node = document.createElement(type);
-
-                this._node.dataset.cmItem = descr;
+        _buildNode() {
+            if (typeof this.descr === "object") {
+                this._buildFromObject();
+            } else if (typeof this.descr === "string") {
+                this._buildFromString();
             }
         }
 
-        _registerActionEventListener(action) {
+        _buildFromObject() {
+            let text = document.createTextNode(this.descr.title);
+            this._node = document.createElement("li");
+
+            this._node.appendChild(text);
+            this._node.dataset.cmItem = "";
+
+            this._registerActionEventListener(this.descr.action);
+        }
+
+        _buildFromString() {
+            let type = ContextMenu.Item._specialItems[this.descr];
+            this._node = document.createElement(type);
+
+            this._node.dataset.cmItem = this.descr;
+        }
+
+        _registerActionEventListener() {
             /*
                 Threshold in 200ms is necessary to avoid "falsy" action
                 triggering.
             */
             setTimeout(() => {
                 this._node.addEventListener("mouseup", (event) => {
-                    this._handleCallAction(action);
+                    this.descr.action.call(this.cm);
+                    this.cm.close();
                 });
             }, 200);
 
+            this._registerBehaviorEventListener();
+        }
+
+        _registerBehaviorEventListener() {
             this._node.addEventListener("mousedown", (event) => {
+                console.log("here");
                 event.stopPropagation();
             });
 
@@ -682,10 +699,6 @@ const ContextMenu = function() {
                 event.stopPropagation();
                 event.preventDefault();
             });
-        }
-
-        _handleCallAction(action) {
-            action();
         }
 
         static get _specialItems() {
