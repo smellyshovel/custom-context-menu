@@ -260,7 +260,14 @@ const ContextMenu = function() {
             /*
                 Execute open callback.
             */
-            this.options.callback.open.call(this);
+            let callback = this.options.callback.open;
+            try {
+                if (callback) {
+                    callback.call(this);
+                }
+            } catch (e) {
+                this.logger.warn(M.runtime.badCallback(callback, "open"));
+            }
         }
 
         _renderOverlay() {
@@ -425,7 +432,14 @@ const ContextMenu = function() {
             /*
                 Execute close callback.
             */
-            this.options.callback.close.call(this);
+            let callback = this.options.callback.close;
+            try {
+                if (callback) {
+                    callback.call(this);
+                }
+            } catch (e) {
+                this.logger.warn(M.runtime.badCallback(callback, "close"));
+            }
         }
 
         static _checkTarget(logger, target) {
@@ -620,7 +634,11 @@ const ContextMenu = function() {
 
                 runtime: {
                     badAction(given, index) {
-                        return `each item's action must be a function, but the action of the item #${index + 1} is ${typeof given}`;
+                        return `each item's action must be a function, but the action of the item #${index + 1} is ${typeof given}. Ignoring`;
+                    },
+
+                    badCallback(given, kind) {
+                        return `${kind} callback must be a function, but ${typeof given} is given. Ignoring`;
                     }
                 }
             };
@@ -691,7 +709,7 @@ const ContextMenu = function() {
                     try {
                         this.descr.action.call(this.cm);
                     } catch (e) {
-                        this.cm.logger.error(M.runtime.badAction(this.descr.action, this.index))
+                        this.cm.logger.warn(M.runtime.badAction(this.descr.action, this.index))
                     }
 
                     this.cm.close();
