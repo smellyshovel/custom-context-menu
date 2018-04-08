@@ -139,67 +139,64 @@ const ContextMenu = function() {
             /*
                 We need 2 sets of different event listeners to track the conetxt
                 menu closure. The first one is used if the `noRecreate` option
-                is `true` and the second one when not.
+                is `true` and the second one if not.
             */
             if (this.options.noRecreate) {
                 /*
-                    Here we listen to the rightclick anywhere "above" the
-                    overlay. This event listener is also responsible for hitting
-                    the menu key, so we chicking the `closeOnKey` option's state
-                    as well.
+                    If a click happened on the overlay and the click is not the
+                    rightclick, then close the context menu. If the click is the
+                    rightclick, then it will be handled by the appropriate event
+                    listener defined below this if-else block.
                 */
-                this._.overlay.addEventListener("contextmenu", (event) => {
-                    event.stopPropagation();
-                    event.preventDefault();
-
-                    if (!this.options.closeOnKey ? event.which !== 0 : true) {
+                this._.overlay.addEventListener("mousedown", (event) => {
+                    if (event.which !== 3) {
                         this.close();
                     }
                 });
             } else {
                 /*
-                    The same applies here, but we should remeber that the
-                    context menu must be recreated if the closure was triggered
-                    via the rightclick.
+                    Close the context menu on any click (whether right of left)
+                    on the overlay. `contextmenu` event listener takes place
+                    after the `mousedown`, so a new context menu will be opened
+                    after the closure. This is the main idea lying under the
+                    `noRecreate` option.
                 */
-                this._.overlay.addEventListener("contextmenu", (event) => {
-                    event.preventDefault();
+                this._.overlay.addEventListener("mousedown", (event) => {
+                    this.close();
+                });
 
-                    if (event.which === 0) {
-                        if (this.options.closeOnKey) {
-                            event.stopPropagation();
-                            this.close();
-                        } else {
-                            event.stopPropagation();
-                        }
-                    } else {
+                /*
+                    But it's also necessary to close the context menu if the
+                    click happened not on the overlay, but over the context
+                    menu itself. The next 2 event listeners are necessary in
+                    order just to close the context menu in such case and NOT
+                    to recreate it (yeah, even if the `noRecreate` option is
+                    true).
+                */
+                this._.cm.addEventListener("mousedown", (event) => {
+                    event.stopPropagation();
+                    if (event.which !== 3) {
                         this.close();
                     }
                 });
 
-                /*
-                    This one is necessary to close the context menu if the
-                    rightclick happened on the context menu, but not the
-                    overlay. If we omit this, then the context menu will be
-                    recreated in that point where the rightclick happened even
-                    if it happened on the context menu itself.
-                */
                 this._.cm.addEventListener("contextmenu", (event) => {
-                    event.stopPropagation();
                     event.preventDefault();
+                    event.stopPropagation();
                     this.close();
                 });
             }
 
             /*
-                Besides those 2 we also need these 2 that are applied in any way
-                not depending on the `noRecreate` option's state. `mousedown`
-                tracks any kind of click except for the rightclick, because this
-                one is being tracked by the appropriate `contextmenu` event
-                listener.
+                Here we listen to the rightclick anywhere "above" the overlay.
+                This event listener is also responsible for hitting the menu
+                key, so we check the `closeOnKey` option's state as well.
             */
-            this._.overlay.addEventListener("mousedown", (event) => {
-                if (event.which !== 3) {
+            this._.overlay.addEventListener("contextmenu", (event) => {
+                event.stopPropagation();
+                event.preventDefault();
+
+                if (!this.options.closeOnKey ? event.which !== 0 : true) {
                     this.close();
                 }
             });
@@ -211,13 +208,11 @@ const ContextMenu = function() {
                 listener will continue to live even after the context menu has
                 been closed.
             */
-            this._.escKeyEventCallback = (event) => {
+            document.addEventListener("keydown", () => {
                 if (event.keyCode === 27) {
                     this.close();
                 }
-            };
-
-            document.addEventListener("keydown", this._.escKeyEventCallback);
+            }, {once: true});
         }
 
         _open(event) {
@@ -416,12 +411,6 @@ const ContextMenu = function() {
                 Restore the initial `overflow` value.
             */
             document.documentElement.style.overflow = "";
-
-            /*
-                Removing the escape key down event listener to avoid it
-                triggering after the context menu becomes actually closed.
-            */
-            document.removeEventListener("keydown", this._.escKeyEventCallback);
 
             /*
                 Removing the overlay means removing all the fottprints of the
