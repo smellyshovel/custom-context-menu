@@ -398,7 +398,48 @@ const ContextMenu = function() {
 
         _setPosition() {
             this._.cm.style.left = this._.position.x + "px";
-            this._.cm.style.top = this._.position.y + "px";
+
+            if (this._.position.y >= 0) {
+                this._.cm.style.top = this._.position.y + "px";
+            } else {
+                let viewportHeight = this._.overlay.getBoundingClientRect().height,
+                    safeZone = this.options.safeZone;
+
+                this._.cm.style.marginTop = safeZone + "px";
+                this._.cm.style.maxHeight =  viewportHeight - safeZone * 2 + "px";
+                this._.cm.style.top = "0px";
+                this._.cm.style.overflow = "hidden"; // round corners
+
+                // let arrowUp = document.createElement("div");
+                // let arrowUpChar = document.createTextNode("▲");
+                // arrowUp.appendChild(arrowUpChar);
+                // arrowUp.dataset.cmItem = "arrow";
+                // arrowUp.style.position = "absolute";
+                // arrowUp.style.top = "0px";
+                //
+                // let arrowDown = document.createElement("div");
+                // let arrowDownChar = document.createTextNode("▼");
+                // arrowDown.appendChild(arrowDownChar);
+                // arrowDown.dataset.cmItem = "arrow";
+                // arrowDown.style.position = "absolute";
+                // arrowDown.style.bottom = "0px";
+                //
+                // this._.cm.insertBefore(arrowUp, this._.cm.firstChild);
+                // this._.cm.appendChild(arrowDown);
+
+                // let menu = this._.cm.children[1],
+                //     menuHeight = this._.cm.getBoundingClientRect().height,
+                //     arrowHeight = arrowUp.getBoundingClientRect().height;
+                //
+                // menu.style.maxHeight = menuHeight - arrowHeight * 2 + "px";
+                // menu.style.overflow = "hidden";
+
+                this..addEventListener("mousemove", (event) => {
+                    let factor = menuHeight / menu.getBoundingClientRect().height;
+                    console.log(factor);
+                    menu.style.transform = `translate(0, ${-event.clientY / factor}px)`;
+                });
+            }
         }
 
         _markAsVisible() {
@@ -537,6 +578,7 @@ const ContextMenu = function() {
                 closeOnKey: false,
                 noRecreate: true,
                 transfer: "y",
+                safeZone: 10,
                 callback: {
                     open() {},
                     close() {}
