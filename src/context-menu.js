@@ -397,48 +397,95 @@ const ContextMenu = function() {
         }
 
         _setPosition() {
+            /*
+                Setting the `x` coordinate. We have nothing to do with it, so
+                it's OK just to set it as it is (because it has been previously
+                determined).
+            */
             this._.cm.style.left = this._.position.x + "px";
 
-            if (this._.position.y >= 0) {
-                this._.cm.style.top = this._.position.y + "px";
+            /*
+                For shortness later on.
+            */
+            let viewportHeight = this._.overlay.getBoundingClientRect().height,
+                cmBottom = this._.cm.getBoundingClientRect().bottom,
+                verticalMargin = this.options.verticalMargin;
+
+            /*
+                If the `y` coordinate is above the top screen side (because the
+                context menu has too many items and it has been transfered)
+                then force the menu to be rendered in screen bounds, i.e make
+                it's top left coordinate to be below the top screen side for the
+                `safeZone` amount of pixels.
+            */
+            if (this._.position.y < 0) {
+                /*
+                    If the context menu now doesn't fit the height of the
+                    viewport (that is always the case, becase we previosly
+                    transfered the menu due to that reason), then we shrink it,
+                    add arrows and enable a scrollbar (for now, may be the
+                    scrollbar will be replaced with some other sort of
+                    interaction/scrolling in the future). This `if` condition
+                    can not be combined with the previous one via the `&&`
+                    because of incorrect `else` statement handling.
+                */
+                if (cmBottom > viewportHeight) {
+                    /*
+                        Setting the `y` position including the `verticalMargin`
+                        and restricting the height of the context menu (also
+                        including the `verticalMargin`).
+                    */
+                    this._.cm.style.top = `${verticalMargin}px`;
+                    this._.cm.style.maxHeight = `${viewportHeight - verticalMargin * 2}px`;
+                    this._.cm.style.overflow = "hidden";
+
+                    /*
+                        Preparing "up" and "down" arrows.
+                    */
+                    let arrowUp = document.createElement("div");
+                    let arrowUpChar = document.createTextNode("▲");
+                    arrowUp.appendChild(arrowUpChar);
+                    arrowUp.dataset.cmItem = "arrow";
+
+                    let arrowDown = document.createElement("div");
+                    let arrowDownChar = document.createTextNode("▼");
+                    arrowDown.appendChild(arrowDownChar);
+                    arrowDown.dataset.cmItem = "arrow";
+
+                    /*
+                        Inserting the arrows as the first and the last elements
+                        of the context menu (around the actual menu that is the
+                        `ol` element).
+                    */
+                    this._.cm.insertBefore(arrowUp, this._.cm.firstChild);
+                    this._.cm.appendChild(arrowDown);
+
+                    /*
+                        Now the the actual menu (`ol` element) is the second
+                        element in the context menu (`div` element). Getting
+                        the height of the `div` element and the height of the
+                        two arrows.
+                    */
+                    let menu = this._.cm.children[1],
+                        cmHeight = this._.cm.getBoundingClientRect().height,
+                        arrowUpHeight = arrowUp.getBoundingClientRect().height,
+                        arrowDownHeight = arrowDown.getBoundingClientRect().height;
+
+                    /*
+                        Restricting the actual menu's height to be the height
+                        of the `div` element minus the height of the 2 arrows
+                        and enabling a scrollbar to have access to all of the
+                        items.
+                    */
+                    menu.style.maxHeight = `${cmHeight - arrowUpHeight - arrowDownHeight}px`;
+                    menu.style.overflow = "auto";
+                }
             } else {
-                let viewportHeight = this._.overlay.getBoundingClientRect().height,
-                    safeZone = this.options.safeZone;
-
-                this._.cm.style.marginTop = safeZone + "px";
-                this._.cm.style.maxHeight =  viewportHeight - safeZone * 2 + "px";
-                this._.cm.style.top = "0px";
-                this._.cm.style.overflow = "hidden"; // round corners
-
-                // let arrowUp = document.createElement("div");
-                // let arrowUpChar = document.createTextNode("▲");
-                // arrowUp.appendChild(arrowUpChar);
-                // arrowUp.dataset.cmItem = "arrow";
-                // arrowUp.style.position = "absolute";
-                // arrowUp.style.top = "0px";
-                //
-                // let arrowDown = document.createElement("div");
-                // let arrowDownChar = document.createTextNode("▼");
-                // arrowDown.appendChild(arrowDownChar);
-                // arrowDown.dataset.cmItem = "arrow";
-                // arrowDown.style.position = "absolute";
-                // arrowDown.style.bottom = "0px";
-                //
-                // this._.cm.insertBefore(arrowUp, this._.cm.firstChild);
-                // this._.cm.appendChild(arrowDown);
-
-                // let menu = this._.cm.children[1],
-                //     menuHeight = this._.cm.getBoundingClientRect().height,
-                //     arrowHeight = arrowUp.getBoundingClientRect().height;
-                //
-                // menu.style.maxHeight = menuHeight - arrowHeight * 2 + "px";
-                // menu.style.overflow = "hidden";
-
-                this..addEventListener("mousemove", (event) => {
-                    let factor = menuHeight / menu.getBoundingClientRect().height;
-                    console.log(factor);
-                    menu.style.transform = `translate(0, ${-event.clientY / factor}px)`;
-                });
+                /*
+                    If the context menu fits on the page, then just explicitly
+                    set it's position to the earlier determined.
+                */
+                this._.cm.style.top = this._.position.y + "px";
             }
         }
 
@@ -578,7 +625,7 @@ const ContextMenu = function() {
                 closeOnKey: false,
                 noRecreate: true,
                 transfer: "y",
-                safeZone: 10,
+                verticalMargin: 10,
                 callback: {
                     open() {},
                     close() {}
