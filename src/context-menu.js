@@ -3,28 +3,7 @@ const ContextMenu = function() {
     "use strict";
 
     class ContextMenu {
-        constructor(target, items, options, debug) {
-            /*
-                Each ContextMenu instance must have a separate logger because
-                the logger is allowed to log messages only if the `debug` option
-                is `true`. Creating a separate logger allows us to avoid passing
-                the value of the `debug` option from call to call so we can just
-                create an instance of logger passing the value of the `debug`
-                option only once and the logger will know whether it's possible
-                to log something or not.
-            */
-            try {
-                this.logger = new ContextMenu.Logger(options.name, debug);
-            } catch (e) {
-                this.logger = new ContextMenu.Logger("", debug);
-            }
-
-            /*
-                Here's an example. We just tell the logger what we need to log,
-                and it decides itself whether to actually log it.
-            */
-            this.logger.log("creating...");
-
+        constructor(target, items, options) {
             /*
                 Check target for errors. If there is a CM instance already
                 defined for the same target as the one that's being created now
@@ -33,19 +12,7 @@ const ContextMenu = function() {
             let alreadyDefined = ContextMenu._checkTarget(this.logger, target);
             if (alreadyDefined) return alreadyDefined;
 
-            /*
-                Check items for errors.
-            */
-            ContextMenu._checkItems(this.logger, items);
-
-            /*
-                Check options for those that are unknown, then proxy the options
-                in order to track addition of new ones that are also might be
-                unknown. Moreover, the proxying solves the problem with
-                providing default valus for options.
-            */
-            ContextMenu._checkOptions(this.logger, options);
-            options = ContextMenu._proxyOptions(this.logger, options);
+            // set prototype
 
             /*
                 Making target, items and options to be properties of a CM
@@ -85,8 +52,6 @@ const ContextMenu = function() {
                 the ContextMenu invokation.
             */
             this._registerOpenEventListener();
-
-            this.logger.log("created. Waiting for call...");
         }
 
         _registerOpenEventListener() {
@@ -96,8 +61,6 @@ const ContextMenu = function() {
                 tracking the ContextMenu closure.
             */
             this.target.addEventListener("contextmenu", (event) => {
-                this.logger.log("called.");
-
                 this._handleCallOpen(event);
                 this._registerCloseEventListener();
             });
@@ -267,13 +230,8 @@ const ContextMenu = function() {
             /*
                 Execute open callback.
             */
-            let callback = this.options.callback.open;
-            try {
-                if (callback) {
-                    callback.call(this);
-                }
-            } catch (e) {
-                this.logger.warn(M.runtime.badCallback(callback, "open"));
+            if (typeof this.options.callback.open === "function") {
+                this.options.callback.open.call(this);
             }
         }
 
@@ -521,24 +479,12 @@ const ContextMenu = function() {
             /*
                 Execute close callback.
             */
-            let callback = this.options.callback.close;
-            try {
-                if (callback) {
-                    callback.call(this);
-                }
-            } catch (e) {
-                this.logger.warn(M.runtime.badCallback(callback, "close"));
+            if (typeof this.options.callback.close === "function") {
+                this.options.callback.close.call(this);
             }
         }
 
         static _checkTarget(logger, target) {
-            /*
-                Checking if target is instance of HTMLElement.
-            */
-            if (!(target instanceof HTMLElement)) {
-                logger.error(M.target.bad(target));
-            }
-
             /*
                 Checking if there is an already defined for this target context
                 menu.
@@ -551,82 +497,8 @@ const ContextMenu = function() {
                 Warn and return a found one if any.
             */
             if (alreadyDefined) {
-                logger.warn(M.target.alreadyDefined(target));
                 return alreadyDefined;
             }
-        }
-
-        static _checkItems(logger, items) {
-            /*
-                Checking if items is an array.
-            */
-            if (!(Array.isArray(items))) {
-                logger.error(M.items.bad(items));
-            }
-
-            items.forEach((item, i) => {
-                if (typeof item === "object" && item !== null) {
-                    if (!("title" in item) || !("action" in item)) {
-                        /*
-                            If item is object, but this object lacks necessary
-                            properties.
-                        */
-                        logger.error(M.items.missSmtn(i));
-                    }
-                } else if (typeof item === "string") {
-                    if (!(item in ContextMenu.Item._specialItems)) {
-                        /*
-                            If item is string, but this string represents
-                            unknown special item.
-                        */
-                        logger.error(M.items.unknownSpecial(item, i));
-                    }
-                } else {
-                    /*
-                        If items is neither object nor string.
-                    */
-                    logger.error(M.items.notAnItem(item, i));
-                }
-            });
-        }
-
-        static _checkOptions(logger, options) {
-            /*
-                Checking if options is passed to the ContextMenu constructor and
-                that it's an object (but not an array). I wanted initially to
-                make options an optional parameter, but it seems like there's no
-                way to do so.
-            */
-            if (typeof options !== "object" && !Array.isArray(options)) {
-                logger.error(M.options.bad(options));
-            }
-
-            /*
-                Here we know for sure that options is the object. So check this
-                object for unknown options and warn about any found one.
-            */
-            Object.keys(options).forEach((option) => {
-                if (!Object.keys(this._defaultOptions).includes(option)) {
-                    logger.warn(M.options.unknown(option));
-                }
-            });
-        }
-
-        static _proxyOptions(logger, options) {
-            /*
-                Proxying is necessary to warn user in case of adding an unknown
-                option and to provide values for unspecified ones.
-            */
-            return new Proxy(options, {
-                get: (target, prop) => {
-                    return prop in target ? target[prop] : this._defaultOptions[prop];
-                },
-
-                set: (target, prop, value) => {
-                    target[prop] = value;
-                    this._checkOptions(logger, target);
-                }
-            });
         }
 
         static get _defaultOptions() {
@@ -647,111 +519,6 @@ const ContextMenu = function() {
     }
 
     ContextMenu._instances = [];
-
-    ContextMenu.Logger = class Logger {
-        constructor(contextMenuName, debugEnabled) {
-            this._name = contextMenuName;
-            this._allowed = debugEnabled;
-        }
-
-        static get _messages() {
-            return {
-                prefix: {
-                    prefix: "Custom Context Menu",
-
-                    get e() {
-                        return `${this.prefix} Error`;
-                    },
-
-                    get w() {
-                        return `${this.prefix} Warning`;
-                    }
-                },
-
-                target: {
-                    bad(given) {
-                        return `target must be an HTMLElement instance, but ${typeof given} is given`;
-                    },
-
-                    alreadyDefined(given) {
-                        function getTagName() {
-                            if (given instanceof HTMLDocument) {
-                                return "document"
-                            } else {
-                                return `${given.tagName}#${given.id ? given.id : "[no-id]"}`;
-                            }
-                        }
-
-                        return `context menu for ${getTagName()} has already been defined. New instance was not created`
-                    },
-
-                    redefinition() {
-                        return `a target can not be redefined`
-                    }
-                },
-
-                items: {
-                    bad(given) {
-                        return `items must be an array, but ${typeof given} is given`;
-                    },
-
-                    missSmtn(index) {
-                        return `each item represented by an object must contain "title" and "action" properties, but the item #${index + 1} seems to miss something`;
-                    },
-
-                    unknownSpecial(given, index) {
-                        return `unknown special item "${given}" (#${index + 1})`;
-                    },
-
-                    notAnItem(given, index) {
-                        return `each item must be an object or a string, but the item #${index + 1} is ${typeof given}`;
-                    }
-                },
-
-                options: {
-                    bad(given) {
-                        return `options must be an object, but ${typeof given === "object" ? "array" : typeof given} is given`;
-                    },
-
-                    unknown(given) {
-                        return `unknown option "${given}". Will be ignored. Refer to the documentation to find a list of all the available options`;
-                    },
-
-                    badName(given) {
-                        return `the given name "${given}" of ${typeof given} type can not be converted to string via the standard toString() method. Ignoring`;
-                    }
-                },
-
-                runtime: {
-                    badAction(given, index) {
-                        return `each item's action must be a function, but the action of the item #${index + 1} is ${typeof given}. Ignoring`;
-                    },
-
-                    badCallback(given, kind) {
-                        return `${kind} callback must be a function, but ${typeof given} is given. Ignoring`;
-                    }
-                }
-            };
-        }
-
-        log(msg) {
-            if (this._allowed) {
-                console.info(`${M.prefix.prefix} [${this.name}]: ${msg}`);
-            }
-        }
-
-        get name() {
-            return this._name ? this._name : "unnamed";
-        }
-
-        warn(warning) {
-            console.warn(`${M.prefix.w} [${this.name}]: ${warning}`);
-        }
-
-        error(error) {
-            throw `${M.prefix.e} [${this.name}]: ${error}`;
-        }
-    }
 
     ContextMenu.Item = class Item {
         constructor(descr, index, contextMenu) {
@@ -797,12 +564,7 @@ const ContextMenu = function() {
             */
             setTimeout(() => {
                 this._node.addEventListener("mouseup", (event) => {
-                    try {
-                        this.descr.action.call(this.cm);
-                    } catch (e) {
-                        this.cm.logger.warn(M.runtime.badAction(this.descr.action, this.index))
-                    }
-
+                    this.descr.action.call(this.cm);
                     this.cm.close();
                 });
             }, 200);
@@ -827,12 +589,6 @@ const ContextMenu = function() {
             }
         }
     }
-
-    /*
-        In order to be able to get acces to messages simply by accessing `M`
-        instead of passing the full path `ContextMenu.Logger._messages`.
-    */
-    const M = ContextMenu.Logger._messages;
 
     return ContextMenu;
 }();
