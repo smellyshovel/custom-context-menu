@@ -1,4 +1,6 @@
-// basically this wrapper is necsessary only to enable strict mode
+/*
+    This wrapper is necessary to enable strict mode.
+*/
 const ContextMenu = function() {
     "use strict";
 
@@ -9,38 +11,24 @@ const ContextMenu = function() {
                 defined for the same target as the one that's being created now
                 then return a found instance instead of "recreating" the CM.
             */
-            let alreadyDefined = ContextMenu._checkTarget(this.logger, target);
+            let alreadyDefined = ContextMenu._checkTarget(target);
             if (alreadyDefined) return alreadyDefined;
 
-            // set prototype
+            /*
+                Provide default (fallback) options values by setting the
+                prototype of the `options` object to the ::_defaultOptions
+                object.
+            */
+            Object.setPrototypeOf(options, ContextMenu._defaultOptions);
 
             /*
-                Making target, items and options to be properties of a CM
-                instance to have an access to them in methods and outside. This
-                provides a possibility to dinamically add new items and change
-                options.
+                Make items and options to be the properties of the CM instance
+                to have an access to them in methods and outside. This provides
+                a possibility to dinamically add new items and change options.
             */
-            this.target = target;
+            this._target = target;
             this.items = items;
             this.options = options;
-
-            /*
-                All the properties that are created asyncronously must be
-                predefined, because we won't be able to define new properties
-                after freezing the instance. However, due to the freezing we
-                won't also be able to redefine existing properties. So we need
-                only one predefined object in which we'll store all the
-                asyncronously created properties, becase the freezing affects
-                only one level, so the `_` object will act like unfrozen one.
-            */
-            this._ = {};
-
-            /*
-                Freezing the instance to prevent target, items and options
-                redefinition, which may lead to multiple runtime errors and
-                other undesired behavior.
-            */
-            Object.freeze(this);
 
             /*
                 Save the instance to prevent "recreating".
@@ -48,8 +36,8 @@ const ContextMenu = function() {
             ContextMenu._instances.push(this);
 
             /*
-                Registering the event listener that is responsible for tracking
-                the ContextMenu invokation.
+                Register the event listener that is responsible for tracking the
+                CM invokation.
             */
             this._registerOpenEventListener();
         }
@@ -58,9 +46,9 @@ const ContextMenu = function() {
             /*
                 When the `contextmenu` event takes place, handle it first and
                 then register the event listener that is responsible for
-                tracking the ContextMenu closure.
+                tracking the CM closure.
             */
-            this.target.addEventListener("contextmenu", (event) => {
+            this._target.addEventListener("contextmenu", (event) => {
                 this._handleCallOpen(event);
                 this._registerCloseEventListener();
             });
@@ -68,17 +56,17 @@ const ContextMenu = function() {
 
         _handleCallOpen(event) {
             /*
-                Prevent opening of the context menues that are defined for those
-                elements that are below the `this.target` in the DOM.
+                Prevent opening of the CMs that are defined for those elements
+                that are below the `this.target` in the DOM.
             */
             event.stopPropagation();
 
             /*
-                If `defaultOnAlt` is `true` then check whether the alt key was not
-                holded when the event was triggered or if it was. If it was then
-                the code below just won't be executed, i.e. the default context
-                menu will appear. But if `defaultOnAlt` is `false`, then just
-                show a custom context menu in any way.
+                If `defaultOnAlt` is `true` then check whether the alt key was
+                not holded when the event was triggered or if it was. If it was
+                then the code below just won't be executed, i.e. the default
+                context menu will appear. But if `defaultOnAlt` is `false`, then
+                just show a custom context menu in any way.
             */
             if (this.options.defaultOnAlt ? event.altKey === false : true) {
                 /*
@@ -90,9 +78,7 @@ const ContextMenu = function() {
                     Open the context menu if it's not `disabled`. Else just
                     remind that it is.
                 */
-                if (this.options.disabled) {
-                    this.logger.log("the context menu is disabled.");
-                } else {
+                if (!this.options.disabled) {
                     this._open(event);
                 }
             }
@@ -100,9 +86,9 @@ const ContextMenu = function() {
 
         _registerCloseEventListener() {
             /*
-                We need 2 sets of different event listeners to track the conetxt
+                We need 2 sets of different event listeners to track the context
                 menu closure. The first one is used if the `noRecreate` option
-                is `true` and the second one if not.
+                is `true` and the second one if `false`.
             */
             if (this.options.noRecreate) {
                 /*
@@ -111,7 +97,7 @@ const ContextMenu = function() {
                     rightclick, then it will be handled by the appropriate event
                     listener defined below this if-else block.
                 */
-                this._.overlay.addEventListener("mousedown", (event) => {
+                this._overlay.addEventListener("mousedown", (event) => {
                     if (event.which !== 3) {
                         this.close();
                     }
@@ -124,27 +110,27 @@ const ContextMenu = function() {
                     after the closure. This is the main idea lying under the
                     `noRecreate` option.
                 */
-                this._.overlay.addEventListener("mousedown", (event) => {
+                this._overlay.addEventListener("mousedown", (event) => {
                     this.close();
                 });
             }
 
             /*
-                But it's also necessary to close the context menu if the
-                click happened not on the overlay, but over the context
-                menu itself. The next 2 event listeners are necessary in
-                order just to close the context menu in such case and NOT
-                to recreate it (yeah, even if the `noRecreate` option is
-                true).
+                But it's also necessary to close the context menu if the click
+                happened not on the overlay, but over the context menu itself.
+                The next 2 event listeners are necessary in order just to close
+                the context menu in such case and NOT to recreate it (yeah, even
+                if the `noRecreate` option is `false`).
 
                 This part has earlier been in the `else` block. But it became
                 obvious that we have to close the context menu on the right
                 click over the cm, but not to close it on the left click,
                 because there's a need to be able to interact with a scrollbar
-                using a mouse.
+                using a mouse cursor (but not only a wheel).
             */
-            this._.cm.addEventListener("mousedown", (event) => {
+            this._cm.addEventListener("mousedown", (event) => {
                 event.stopPropagation();
+
                 /*
                     Uncomment the part below to enable the context menu closure
                     on the left button click on the context menu, but be aware
@@ -156,7 +142,7 @@ const ContextMenu = function() {
                 // }
             });
 
-            this._.cm.addEventListener("contextmenu", (event) => {
+            this._cm.addEventListener("contextmenu", (event) => {
                 event.preventDefault();
                 event.stopPropagation();
                 this.close();
@@ -167,7 +153,7 @@ const ContextMenu = function() {
                 This event listener is also responsible for hitting the menu
                 key, so we check the `closeOnKey` option's state as well.
             */
-            this._.overlay.addEventListener("contextmenu", (event) => {
+            this._overlay.addEventListener("contextmenu", (event) => {
                 event.stopPropagation();
                 event.preventDefault();
 
@@ -177,11 +163,10 @@ const ContextMenu = function() {
             });
 
             /*
-                Here we define a callback function that is called when the
-                `keydown` event takes place. We save in order to remove it later
-                in #close method because if we don't do so, then this event
-                listener will continue to live even after the context menu has
-                been closed.
+                The event listener responsible for the CM closure on the
+                "escape" key hit. We only need it to response once for 2
+                ressons: to prevent document event listeners list polluting and
+                to avoid fake event triggering after the CM has been closed.
             */
             document.addEventListener("keydown", () => {
                 if (event.keyCode === 27) {
@@ -194,13 +179,11 @@ const ContextMenu = function() {
             /*
                 Render an overlay. The overlay is used to track the context menu
                 closure and also acts as sort of a grouping element.
-                !!! TODO: may be it's better not to use `_` at all but to pass
-                overlay, items, etc. as formal parameters?
             */
             this._renderOverlay();
 
             /*
-                Build items DOM elements from the `items` array.
+                Build items DOM elements from the .items array.
             */
             this._buildItemElements();
 
@@ -218,102 +201,113 @@ const ContextMenu = function() {
             this._determinePosition(event);
 
             /*
-                Set the correct context menu position.
+                Set the correct context menu position (determined earlier with,
+                probably, some additions in rare cases).
             */
             this._setPosition();
 
             /*
-                Mark the overlay and the context menu as visible.
+                Mark the overlay and the context menu as visible in the right
+                position.
             */
             this._markAsVisible();
 
             /*
-                Execute open callback.
+                Execute the opening callback.
             */
-            if (typeof this.options.callback.open === "function") {
-                this.options.callback.open.call(this);
-            }
+            this.options.callback.open.call(this);
         }
 
         _renderOverlay() {
             /*
-                Disable scrolling via setting `overflow` to `hidden`.
+                Disable page scrolling via setting the `overflow` CSS property
+                to `hidden`. This denies page scrolling (in any form, whether
+                the obvious mouse wheel scrolling or a `page down`, `arrow up`,
+                and so on).
             */
             document.documentElement.style.overflow = "hidden";
 
             /*
-                Create a div element with `data-cm-overlay` attribute the
-                value of which equals the `name` of the context menu.
+                Create a div element with `data-cm-overlay` attribute the value
+                of which equals the `name` of the context menu (for styling
+                purposes).
             */
-            this._.overlay = document.createElement("div");
-            this._.overlay.dataset.cmOverlay = this.options.name;
+            this._overlay = document.createElement("div");
+            this._overlay.dataset.cmOverlay = this.options.name;
 
             /*
-                Set the necessary styles that are absolutely must be.
+                Set the necessary styles that are absolutely must be, i.e. those
+                that make the overlay what it is and whithout which (or in case
+                of redefining of which) the overlay may begin to work
+                incorrectly (if work at all).
             */
-            this._.overlay.style.cssText = "position: fixed !important;\
-                                            display: block !important;\
-                                            left: 0 !important;\
-                                            top: 0 !important;\
-                                            width: 100vw !important;\
-                                            height: 100vh !important;\
-                                            pointer-events: auto !important";
+            this._overlay.style.cssText = "position: fixed !important;\
+                                           display: block !important;\
+                                           left: 0 !important;\
+                                           top: 0 !important;\
+                                           width: 100vw !important;\
+                                           height: 100vh !important;\
+                                           pointer-events: auto !important";
 
             /*
-                Instert overlay to the body.
+                Insert the overlay to the end of the body (after all the other
+                elements currently presenting in the body).
             */
-            document.body.appendChild(this._.overlay);
+            document.body.appendChild(this._overlay);
         }
 
         _buildItemElements() {
-            this._.itemElements = this.items.map((item, i) => {
+            this._itemElements = this.items.map((item, i) => {
                 return new ContextMenu.Item(item, i, this);
             });
         }
 
         _render() {
             /*
-                Create a div element with `data-cm` attribute the value of which
-                equals the `name` of the context menu.
+                Create a `div` element with `data-cm` attribute the value of
+                which equals the `name` of the CM (for styling purposes also).
             */
-            this._.cm = document.createElement("div");
-            this._.cm.dataset.cm = this.options.name;
+            this._cm = document.createElement("div");
+            this._cm.dataset.cm = this.options.name;
 
             /*
-                Set the necessary styles that are absolutely must be.
+                Set the necessary styles that are absolutely must be. These
+                styles make the CM what it is.
             */
-            this._.cm.style.cssText = "position: absolute !important;\
-                                       display: block !important;\
-                                       left: 0 !important;\
-                                       top: 0 !important;";
+            this._cm.style.cssText = "position: absolute !important;\
+                                      display: block !important;\
+                                      left: 0 !important;\
+                                      top: 0 !important;\
+                                      overflow: hidden;";
 
             /*
-                Create a list which will hold all the items of the context menu.
+                Create a list which will hold all the items of the CM.
             */
             let list = document.createElement("ol");
 
             /*
                 Populate the list with items.
             */
-            this._.itemElements.forEach((item) => {
+            this._itemElements.forEach((item) => {
                 list.appendChild(item);
             });
 
             /*
-                Insert the list inside the context menu.
+                Insert the list inside the context menu (inside the `div`
+                element).
             */
-            this._.cm.appendChild(list);
+            this._cm.appendChild(list);
 
             /*
                 Insert the context menu inside the overlay.
             */
-            this._.overlay.appendChild(this._.cm);
+            this._overlay.appendChild(this._cm);
         }
 
         _determinePosition(event) {
-                /*
-                    Where the click actually happened.
-                */
+            /*
+                Where the click actually happened (viewport relative).
+            */
             let clickedX = event.clientX,
                 clickedY = event.clientY,
 
@@ -321,15 +315,20 @@ const ContextMenu = function() {
                     The width and height of the viewport equals the width and
                     height of the overlay because the overlay's `width` and
                     `height` CSS proerties have been set using `vw` and `vh`.
+                    I don't remember why you can't use something like
+                    `window.inner(Width|Height)` here, but trust me, this
+                    approach is way better and more reliable.
                 */
-                viewportWidth = this._.overlay.getBoundingClientRect().width,
-                viewportHeight = this._.overlay.getBoundingClientRect().height,
+                viewportWidth = this._overlay.getBoundingClientRect().width,
+                viewportHeight = this._overlay.getBoundingClientRect().height,
 
                 /*
-                    The width and height of the yet invisible context menu.
+                    The width and height of the yet invisible context menu. By
+                    the way, this is the reason of why it was necessary to
+                    render the CM before (even though invisible).
                 */
-                cmWidth = this._.cm.getBoundingClientRect().width,
-                cmHeight = this._.cm.getBoundingClientRect().height,
+                cmWidth = this._cm.getBoundingClientRect().width,
+                cmHeight = this._cm.getBoundingClientRect().height,
 
                 /*
                     "Furthest" means the bottom right point of the context menu.
@@ -341,27 +340,28 @@ const ContextMenu = function() {
                     The resulting position is initially equal to the coordinates
                     where the click happened.
                 */
-                this._.position = {x: clickedX, y: clickedY};
+                this._position = {x: clickedX, y: clickedY};
 
             /*
                 But if it's obvious that the context menu won't fit on the page,
                 than transfer it if necessary, or simply force it to fit by
                 setting it's position so the context menu will be rendered right
-                in the corner.
+                in the corner (the case of the `transfer` option set to
+                `false`).
             */
             if (furthestX > viewportWidth) {
                 if (this.options.transfer === "both" || this.options.transfer === "x") {
-                    this._.position.x -= cmWidth;
+                    this._position.x -= cmWidth;
                 } else {
-                    this._.position.x = viewportWidth - cmWidth;
+                    this._position.x = viewportWidth - cmWidth;
                 }
             }
 
             if (furthestY > viewportHeight) {
                 if (this.options.transfer === "both" || this.options.transfer === "y") {
-                    this._.position.y -= cmHeight;
+                    this._position.y -= cmHeight;
                 } else {
-                    this._.position.y = viewportHeight - cmHeight;
+                    this._position.y = viewportHeight - cmHeight;
                }
             }
         }
@@ -372,30 +372,32 @@ const ContextMenu = function() {
                 it's OK just to set it as it is (because it has been previously
                 determined).
             */
-            this._.cm.style.left = this._.position.x + "px";
+            this._cm.style.left = `${this._position.x}px`;
 
             /*
-                For shortness later on.
+                For shortness later on. Familiar approach of getting the
+                viewport height. `cmBottom` holds the coordinate of the bottom
+                edge of the CM. `verticalMargin` is basically just an alias.
             */
-            let viewportHeight = this._.overlay.getBoundingClientRect().height,
-                cmBottom = this._.cm.getBoundingClientRect().bottom,
+            let viewportHeight = this._overlay.getBoundingClientRect().height,
+                cmBottom = this._cm.getBoundingClientRect().bottom,
                 verticalMargin = this.options.verticalMargin;
 
             /*
                 If the `y` coordinate is above the top screen side (because the
-                context menu has too many items and it has been transfered)
+                context menu has too many items and/or it has been transfered)
                 then force the menu to be rendered in screen bounds, i.e make
-                it's top left coordinate to be below the top screen side for the
-                `safeZone` amount of pixels.
+                it's top edge's coordinate to be below the top screen (viewport)
+                side for the `verticalMargin` amount of pixels.
             */
-            if (this._.position.y < 0) {
+            if (this._position.y < 0) {
                 /*
                     If the context menu now doesn't fit the height of the
-                    viewport (that is always the case, becase we previosly
-                    transfered the menu due to that reason), then we shrink it,
-                    add arrows and enable a scrollbar (for now, may be the
-                    scrollbar will be replaced with some other sort of
-                    interaction/scrolling in the future). This `if` condition
+                    viewport (that is almost always the case, becase we
+                    previosly transfered the menu due to that reason), then we
+                    shrink it, add arrows and enable a scrollbar (for now, may
+                    be the scrollbar will be replaced with some other sort of
+                    interaction (scrolling) in the future). This `if` condition
                     can not be combined with the previous one via the `&&`
                     because of incorrect `else` statement handling.
                 */
@@ -405,12 +407,18 @@ const ContextMenu = function() {
                         and restricting the height of the context menu (also
                         including the `verticalMargin`).
                     */
-                    this._.cm.style.top = `${verticalMargin}px`;
-                    this._.cm.style.maxHeight = `${viewportHeight - verticalMargin * 2}px`;
-                    this._.cm.style.overflow = "hidden";
+                    this._cm.style.top = `${verticalMargin}px`;
+                    this._cm.style.maxHeight = `${viewportHeight - verticalMargin * 2}px`;
 
                     /*
-                        Preparing "up" and "down" arrows.
+                        Prepare the "up" and "down" arrows.
+                        `data-cm-item="arrow"` attribute may also be treated as
+                        "special", but we don't add it to the list of allowed
+                        specials because we don't want a user to use arrows
+                        anywhere else (among items). We also use the same
+                        identidier for both "up" and "down" because they will
+                        probably be styled the identical. It's still possible to
+                        overcome this restriction though.
                     */
                     let arrowUp = document.createElement("div");
                     let arrowUpChar = document.createTextNode("▲");
@@ -423,21 +431,25 @@ const ContextMenu = function() {
                     arrowDown.dataset.cmItem = "arrow";
 
                     /*
-                        Inserting the arrows as the first and the last elements
-                        of the context menu (around the actual menu that is the
+                        Insert the arrows as the first and the last elements of
+                        the context menu (around the actual menu that is the
                         `ol` element).
                     */
-                    this._.cm.insertBefore(arrowUp, this._.cm.firstChild);
-                    this._.cm.appendChild(arrowDown);
+                    this._cm.insertBefore(arrowUp, this._cm.firstChild);
+                    this._cm.appendChild(arrowDown);
 
                     /*
                         Now the the actual menu (`ol` element) is the second
                         element in the context menu (`div` element). Getting
                         the height of the `div` element and the height of the
-                        two arrows.
+                        two arrows for further calculations. Remember that the
+                        arrows may still be styled independently one from
+                        another, i.e. they may have different heights, so it's
+                        good practice not to just multiply the height of the
+                        first one by 2, but to encounter heights of the both.
                     */
-                    let menu = this._.cm.children[1],
-                        cmHeight = this._.cm.getBoundingClientRect().height,
+                    let menu = this._cm.children[1],
+                        cmHeight = this._cm.getBoundingClientRect().height,
                         arrowUpHeight = arrowUp.getBoundingClientRect().height,
                         arrowDownHeight = arrowDown.getBoundingClientRect().height;
 
@@ -445,52 +457,61 @@ const ContextMenu = function() {
                         Restricting the actual menu's height to be the height
                         of the `div` element minus the height of the 2 arrows
                         and enabling a scrollbar to have access to all of the
-                        items.
+                        items via scrolling.
                     */
                     menu.style.maxHeight = `${cmHeight - arrowUpHeight - arrowDownHeight}px`;
                     menu.style.overflow = "auto";
                 }
             } else {
                 /*
-                    If the context menu fits on the page, then just explicitly
-                    set it's position to the earlier determined.
+                    If the context menu fits on the page well, then just
+                    explicitly set it's position to the earlier determined
+                    without any tweaking.
                 */
-                this._.cm.style.top = this._.position.y + "px";
+                this._cm.style.top = this._position.y + "px";
             }
         }
 
         _markAsVisible() {
-            this._.overlay.className = "visible";
-            this._.cm.className = "visible";
+            /*
+                Here we can finally mark the CM as visible by respectively
+                setting it's class attribute. Notice, that the CM has actually
+                always been visible. The thing is that all the calculations
+                happen so fast, that a user simply isn't able to notice the CM
+                movement from the top left corner to the right position. This
+                `visible` mark is necessary to add the user an ability to
+                animate the appearance of the CM (for example using the CSS
+                `opacity` property).
+            */
+            this._overlay.className = "visible";
+            this._cm.className = "visible";
         }
 
         close() {
             /*
-                Restore the initial `overflow` value.
+                Restore the initial `overflow` CSS property's value.
             */
             document.documentElement.style.overflow = "";
 
             /*
-                Removing the overlay means removing all the fottprints of the
+                Removing the overlay means removing all the footprints of the
                 context menu together with it's event listeners.
             */
-            this._.overlay.remove();
+            this._overlay.remove();
 
             /*
-                Execute close callback.
+                Execute the closure callback.
             */
-            if (typeof this.options.callback.close === "function") {
-                this.options.callback.close.call(this);
-            }
+            this.options.callback.close.call(this);
         }
 
-        static _checkTarget(logger, target) {
+        static _checkTarget(target) {
             /*
                 Checking if there is an already defined for this target context
                 menu.
             */
             let alreadyDefined = this._instances.find((instance) => {
-                return instance.target === target;
+                return instance._target === target;
             });
 
             /*
@@ -511,8 +532,8 @@ const ContextMenu = function() {
                 transfer: "y",
                 verticalMargin: 10,
                 callback: {
-                    open() {},
-                    close() {}
+                    opening() {},
+                    closure() {}
                 }
             };
         }
