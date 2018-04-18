@@ -166,13 +166,25 @@ const ContextMenu = function() {
                 The event listener responsible for the CM closure on the
                 "escape" key hit. We only need it to response once for 2
                 ressons: to prevent document event listeners list polluting and
-                to avoid fake event triggering after the CM has been closed.
+                to avoid fake event triggering after the CM has been closed. It
+                means that we must remove it later (in the #close to be exact),
+                but to do so we have to save the callback as the property of the
+                instance. Using `{once: true}` as the third option is not
+                suitable because a user may use some other keys during the time
+                the CM is opened, which means that this event will be fired and
+                removed even if the user pressed not the escape key. And this
+                means that he won't be able anymore to close the CM by pressing
+                the escape key. So we have to remove the event listener manually
+                in the #close method.
             */
-            document.addEventListener("keydown", () => {
+            this._escKeyListenerCallback = (event) => {
                 if (event.keyCode === 27) {
+                    event.stopPropagation();
                     this.close();
                 }
-            }, {once: true});
+            };
+
+            document.addEventListener("keydown", this._escKeyListenerCallback);
         }
 
         _open(event) {
@@ -215,7 +227,7 @@ const ContextMenu = function() {
             /*
                 Execute the opening callback.
             */
-            this.options.callback.open.call(this);
+            this.options.callback.opening.call(this);
         }
 
         _renderOverlay() {
@@ -500,9 +512,14 @@ const ContextMenu = function() {
             this._overlay.remove();
 
             /*
+                Remove escape key press event listener.
+            */
+            document.removeEventListener("keydown", this._escKeyListenerCallback);
+
+            /*
                 Execute the closure callback.
             */
-            this.options.callback.close.call(this);
+            this.options.callback.closure.call(this);
         }
 
         static _checkTarget(target) {
