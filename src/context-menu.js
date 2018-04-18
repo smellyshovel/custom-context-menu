@@ -539,20 +539,42 @@ const ContextMenu = function() {
         }
     }
 
+    /*
+        The static property that holds all the instances of the ContextMenu to
+        prevent recreating.
+    */
     ContextMenu._instances = [];
 
     ContextMenu.Item = class Item {
         constructor(descr, index, contextMenu) {
+            /*
+                Store the description, index of the item and the CM that this
+                item belongs to as properties of the instance to have access to
+                them in methods.
+            */
             this.descr = descr;
             this.index = index;
             this.cm = contextMenu;
 
+            /*
+                Actually build the DOM node relying on the provided description
+                (the object that describes the item).
+            */
             this._buildNode();
 
+            /*
+                Return the built node as a ready-to-use DOM element.
+            */
             return this._node;
         }
 
         _buildNode() {
+            /*
+                The description may take one of two forms: an object and a
+                string. Using object a user defines custom items, and using
+                string he defines "special" items like "separator". Therefore
+                there're 2 deffirent ways of building the item.
+            */
             if (typeof this.descr === "object") {
                 this._buildFromObject();
             } else if (typeof this.descr === "string") {
@@ -561,6 +583,15 @@ const ContextMenu = function() {
         }
 
         _buildFromObject() {
+            /*
+                If an object is provided as the description of the item, then we
+                must create a `li` element with the text provided by the `title`
+                property of the description object, add empty `data-cm-item`
+                attribute to it and register the event listener responsible for
+                tracking the action call. `tabIndex` attribute adds basic
+                keyboard support for the interaction with the CM. TODO: there's
+                currently no way to trigger an action using a keyboard.
+            */
             let text = document.createTextNode(this.descr.title);
             this._node = document.createElement("li");
             this._node.tabIndex = 0;
@@ -572,6 +603,16 @@ const ContextMenu = function() {
         }
 
         _buildFromString() {
+            /*
+                If a string is provided as the description of the item, then
+                this item must be trated as a special one. The (extensible) list
+                of all the available special items is stored in the
+                ::_specialItems static property. The elements that represent
+                certain special items are also stored in there. Special items
+                don't have actions attached to them so there's no need to add
+                appropriate event listener (as it is in case of building the
+                item from an object).
+            */
             let type = ContextMenu.Item._specialItems[this.descr];
             this._node = document.createElement(type);
 
@@ -580,8 +621,11 @@ const ContextMenu = function() {
 
         _registerActionEventListener() {
             /*
-                Threshold in 200ms is necessary to avoid "falsy" action
-                triggering.
+                Listen to `mouseup` (whether left of right button) and trigger
+                the action attached to the item. Threshold in 200ms is necessary
+                to avoid "falsy" action triggering. 200 is just an approximate
+                value. More research is needed to establish the value more
+                accurately.
             */
             setTimeout(() => {
                 this._node.addEventListener("mouseup", (event) => {
@@ -590,10 +634,22 @@ const ContextMenu = function() {
                 });
             }, 200);
 
+            /*
+                We must also register some other event listeners that are
+                responsible for correct CM closure handling.
+            */
             this._registerBehaviorEventListener();
         }
 
         _registerBehaviorEventListener() {
+            /*
+                `action` triggers on `mouseup` event. But the `mousedown` and
+                `contextmenu` events happen before the `mouseup`. It means that
+                these events will bubble up the DOM tree and will soon or later
+                lead to the CM closure. So we have to stop event propagation in
+                order to prevent such behavior. This is why this method is
+                named so.
+            */
             this._node.addEventListener("mousedown", (event) => {
                 event.stopPropagation();
             });
