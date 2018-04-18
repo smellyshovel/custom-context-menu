@@ -164,28 +164,40 @@ const ContextMenu = function() {
                 this._.overlay.addEventListener("mousedown", (event) => {
                     this.close();
                 });
-
-                /*
-                    But it's also necessary to close the context menu if the
-                    click happened not on the overlay, but over the context
-                    menu itself. The next 2 event listeners are necessary in
-                    order just to close the context menu in such case and NOT
-                    to recreate it (yeah, even if the `noRecreate` option is
-                    true).
-                */
-                this._.cm.addEventListener("mousedown", (event) => {
-                    event.stopPropagation();
-                    if (event.which !== 3) {
-                        this.close();
-                    }
-                });
-
-                this._.cm.addEventListener("contextmenu", (event) => {
-                    event.preventDefault();
-                    event.stopPropagation();
-                    this.close();
-                });
             }
+
+            /*
+                But it's also necessary to close the context menu if the
+                click happened not on the overlay, but over the context
+                menu itself. The next 2 event listeners are necessary in
+                order just to close the context menu in such case and NOT
+                to recreate it (yeah, even if the `noRecreate` option is
+                true).
+
+                This part has earlier been in the `else` block. But it became
+                obvious that we have to close the context menu on the right
+                click over the cm, but not to close it on the left click,
+                because there's a need to be able to interact with a scrollbar
+                using a mouse.
+            */
+            this._.cm.addEventListener("mousedown", (event) => {
+                event.stopPropagation();
+                /*
+                    Uncomment the part below to enable the context menu closure
+                    on the left button click on the context menu, but be aware
+                    of thereby disabling interaction with the scrollbar with a
+                    mouse cursor.
+                */
+                // if (event.which !== 3) {
+                //     // this.close();
+                // }
+            });
+
+            this._.cm.addEventListener("contextmenu", (event) => {
+                event.preventDefault();
+                event.stopPropagation();
+                this.close();
+            });
 
             /*
                 Here we listen to the rightclick anywhere "above" the overlay.
