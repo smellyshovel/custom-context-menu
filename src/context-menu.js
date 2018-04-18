@@ -775,6 +775,7 @@ const ContextMenu = function() {
         _buildFromObject() {
             let text = document.createTextNode(this.descr.title);
             this._node = document.createElement("li");
+            this._node.tabIndex = 0;
 
             this._node.appendChild(text);
             this._node.dataset.cmItem = "";
