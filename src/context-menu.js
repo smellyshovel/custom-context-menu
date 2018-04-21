@@ -43,45 +43,45 @@ const ContextMenu = function() {
         }
 
         _registerOpeningEventListener() {
+            let handleCall = (event) => {
+                /*
+                    Prevent opening of the CMs that are defined for those elements
+                    that are below the `this.target` in the DOM.
+                */
+                event.stopPropagation();
+
+                /*
+                    If `defaultOnAlt` is `true` then check whether the alt key was
+                    not holded when the event was triggered or if it was. If it was
+                    then the code below just won't be executed, i.e. the default
+                    context menu will appear. But if `defaultOnAlt` is `false`, then
+                    just show a custom context menu in any way.
+                */
+                if (this.options.defaultOnAlt ? event.altKey === false : true) {
+                    /*
+                        Prevent default (browser) context menu from appearing.
+                    */
+                    event.preventDefault();
+
+                    /*
+                        Open the context menu if it's not `disabled`. Else just
+                        remind that it is.
+                    */
+                    if (!this.options.disabled) {
+                        this._open(event);
+                    }
+                }
+            };
+
             /*
                 When the `contextmenu` event takes place, handle it first and
                 then register the event listener that is responsible for
                 tracking the CM closure.
             */
             this._target.addEventListener("contextmenu", (event) => {
-                this._handleCallOpen(event);
+                handleCall(event);
                 this._registerClosureEventListener();
             });
-        }
-
-        _handleCallOpen(event) {
-            /*
-                Prevent opening of the CMs that are defined for those elements
-                that are below the `this.target` in the DOM.
-            */
-            event.stopPropagation();
-
-            /*
-                If `defaultOnAlt` is `true` then check whether the alt key was
-                not holded when the event was triggered or if it was. If it was
-                then the code below just won't be executed, i.e. the default
-                context menu will appear. But if `defaultOnAlt` is `false`, then
-                just show a custom context menu in any way.
-            */
-            if (this.options.defaultOnAlt ? event.altKey === false : true) {
-                /*
-                    Prevent default (browser) context menu from appearing.
-                */
-                event.preventDefault();
-
-                /*
-                    Open the context menu if it's not `disabled`. Else just
-                    remind that it is.
-                */
-                if (!this.options.disabled) {
-                    this._open(event);
-                }
-            }
         }
 
         _registerClosureEventListener() {
