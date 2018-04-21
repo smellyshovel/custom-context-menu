@@ -39,10 +39,10 @@ const ContextMenu = function() {
                 Register the event listener that is responsible for tracking the
                 CM invokation.
             */
-            this._registerOpenEventListener();
+            this._registerOpeningEventListener();
         }
 
-        _registerOpenEventListener() {
+        _registerOpeningEventListener() {
             /*
                 When the `contextmenu` event takes place, handle it first and
                 then register the event listener that is responsible for
@@ -50,7 +50,7 @@ const ContextMenu = function() {
             */
             this._target.addEventListener("contextmenu", (event) => {
                 this._handleCallOpen(event);
-                this._registerCloseEventListener();
+                this._registerClosureEventListener();
             });
         }
 
@@ -84,7 +84,7 @@ const ContextMenu = function() {
             }
         }
 
-        _registerCloseEventListener() {
+        _registerClosureEventListener() {
             /*
                 We need 2 sets of different event listeners to track the context
                 menu closure. The first one is used if the `noRecreate` option
@@ -209,8 +209,7 @@ const ContextMenu = function() {
                 Add event listeners that are responsible for hightlighting
                 (which happens by focusing on) an item.
             */
-            // TODO: use nouns?
-            this._registerSelectEventListener();
+            this._registerNavigationEventListener();
 
             /*
                 Determine where on the page the context menu must appear.
@@ -332,7 +331,7 @@ const ContextMenu = function() {
             this._overlay.appendChild(this._cm);
         }
 
-        _registerSelectEventListener() {
+        _registerNavigationEventListener() {
             /*
                 `focusedN` is the number (index) of the element (item) in the
                 `._normalItems` array which is being currently focused. Its
@@ -712,9 +711,9 @@ const ContextMenu = function() {
                 must create a `li` element with the text provided by the `title`
                 property of the description object, add empty `data-cm-item`
                 attribute to it and register the event listener responsible for
-                tracking the action call. `tabIndex` attribute adds basic
-                keyboard support for the interaction with the CM. TODO: there's
-                currently no way to trigger an action using a keyboard.
+                tracking the action call. `tabIndex` attribute gives us a
+                possibility to focus on the item (which is used basically for
+                every tyoe of interaction with the item).
             */
             let text = document.createTextNode(this.descr.title);
             this._node = document.createElement("li");
