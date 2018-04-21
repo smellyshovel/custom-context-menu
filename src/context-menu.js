@@ -205,7 +205,11 @@ const ContextMenu = function() {
             */
             this._render();
 
-            // add navigation events here? key down, key up, left, right, enter, etc...
+            /*
+                Add event listeners that are responsible for hightlighting
+                (which happens by focusing on) an item.
+            */
+            this._registerSelectEventListener();
 
             /*
                 Determine where on the page the context menu must appear.
@@ -269,8 +273,19 @@ const ContextMenu = function() {
         }
 
         _buildItemElements() {
+            /*
+                ._itemElements are all the items that are about to be rendered
+                on the page. ._normalItems are those that are not special ones.
+                We need such a separation in order to be able to add keyboard
+                event listeners only to those items that are used to trigger
+                some `action`, but not to, for example, "separators".
+            */
             this._itemElements = this.items.map((item, i) => {
                 return new ContextMenu.Item(item, i, this);
+            });
+
+            this._normalItems = this._itemElements.filter((item) => {
+                return item.dataset.cmItem === "";
             });
         }
 
@@ -314,6 +329,81 @@ const ContextMenu = function() {
                 Insert the context menu inside the overlay.
             */
             this._overlay.appendChild(this._cm);
+        }
+
+        _registerSelectEventListener() {
+            /*
+                `focusedN` is the number (index) of the element (item) in the
+                `._normalItems` array which is being currently focused. Its
+                initial state "-1" is used as a starting point, like a note that
+                indicates that we should start from the very first/last item
+                (depending on what arrow key is pressed), but not to continue
+                incrementing/decrementing this value when a key is pressed. We
+                also save the length of the array to avoid it recalculation on
+                every event triggering.
+            */
+            let focusedN = -1,
+                length = this._normalItems.length;
+
+            document.addEventListener("keydown", (event) => {
+                /*
+                    Each time the arrow up or arrow down key is pressed we
+                    determine the item to be focused (or rather it's index) and
+                    actually focusing on the relevant item. Preventing defaul
+                    behavior is necessary to avoid scrolling of an overflowed
+                    context menu. The possibility to focus on an element (item)
+                    that is not focusable (sort of) is provided to us thanks to
+                    giving the item the `tab-index` attribute during its
+                    creation.
+                */
+                if (event.keyCode === 40) {
+                    event.preventDefault();
+                    focusedN += focusedN > length - 2 ? -length + 1 : 1;
+                    this._normalItems[focusedN].focus();
+                }
+
+                if (event.keyCode === 38) {
+                    event.preventDefault();
+                    focusedN = focusedN < 1 ? length - 1 : focusedN - 1;
+                    this._normalItems[focusedN].focus();
+                }
+
+                /*
+                    However providing the item a `tab-index` attribute also
+                    gives a user an ability to navigate through the menu using
+                    the "tab" key. That is undesired, so here we disable such a
+                    behavior by preventing the default action of the "tab" key.
+                */
+                if (event.keyCode === 9) {
+                    event.preventDefault();
+                }
+            });
+
+            /*
+                Accessebility is a great thing, but we shouldn't forget about
+                normal users as well. If a user hovers the mouse over any item
+                (one of normal, i.e. excluding the special ones) it gets
+                focused and the `focusedN` variable's value from this point
+                holds the index of the focused item. That means that if the user
+                than stops his mouse and starts navigating using a keyboard,
+                then the next highlighted item is gonna be the one that is
+                after/before (depending on which key was pressed) the one that's
+                currently being focused (with mouse). But if the user moved a
+                mouse out of any item (for example hovering a special item),
+                then the prviously focused item gets blurred and if he'll press
+                a key up or key down the first/last item will become focused.
+            */
+            this._cm.addEventListener("mousemove", (event) => {
+                if (this._normalItems.includes(event.target)) {
+                    focusedN = this._normalItems.indexOf(event.target);
+                    this._normalItems[focusedN].focus();
+                } else {
+                    if (this._normalItems.includes(document.activeElement)) {
+                        this._normalItems[focusedN].blur();
+                        focusedN = -1;
+                    }
+                }
+            });
         }
 
         _determinePosition(event) {
@@ -491,7 +581,7 @@ const ContextMenu = function() {
                 always been visible. The thing is that all the calculations
                 happen so fast, that a user simply isn't able to notice the CM
                 movement from the top left corner to the right position. This
-                `visible` mark is necessary to add the user an ability to
+                `visible` mark is necessary to give the user an ability to
                 animate the appearance of the CM (for example using the CSS
                 `opacity` property).
             */
@@ -652,6 +742,16 @@ const ContextMenu = function() {
             }, 200);
 
             /*
+                Action triggering must also happen on "enter" key press.
+            */
+            this._node.addEventListener("keydown", (event) => {
+                if (event.keyCode === 13) {
+                    this.descr.action.call(this.cm);
+                    this.cm.close();
+                }
+            });
+
+            /*
                 We must also register some other event listeners that are
                 responsible for correct CM closure handling.
             */
@@ -664,8 +764,8 @@ const ContextMenu = function() {
                 `contextmenu` events happen before the `mouseup`. It means that
                 these events will bubble up the DOM tree and will soon or later
                 lead to the CM closure. So we have to stop event propagation in
-                order to prevent such behavior. This is why this method is
-                named so.
+                order to prevent such behavior. This is why this method is named
+                so.
             */
             this._node.addEventListener("mousedown", (event) => {
                 event.stopPropagation();

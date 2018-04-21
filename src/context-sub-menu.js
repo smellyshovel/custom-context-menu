@@ -14,6 +14,7 @@ void function() {
             console.log("usual");
             this._registerActionEventListener(this.descr.action);
         }
+        // add data-submenu-opener to `li` that opened the submenu
     };
 
     ContextMenu.Item.prototype._registerSubOpenEventListener = function() {
