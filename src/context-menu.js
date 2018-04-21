@@ -209,6 +209,7 @@ const ContextMenu = function() {
                 Add event listeners that are responsible for hightlighting
                 (which happens by focusing on) an item.
             */
+            // TODO: use nouns?
             this._registerSelectEventListener();
 
             /*
@@ -345,7 +346,11 @@ const ContextMenu = function() {
             let focusedN = -1,
                 length = this._normalItems.length;
 
-            document.addEventListener("keydown", (event) => {
+            /*
+                All the event listeners attached to `document` must be removed
+                after the CM closure, so we have to save the callback.
+            */
+            this._kbNavigationListenerCallback = (event) => {
                 /*
                     Each time the arrow up or arrow down key is pressed we
                     determine the item to be focused (or rather it's index) and
@@ -377,7 +382,9 @@ const ContextMenu = function() {
                 if (event.keyCode === 9) {
                     event.preventDefault();
                 }
-            });
+            };
+
+            document.addEventListener("keydown", this._kbNavigationListenerCallback);
 
             /*
                 Accessebility is a great thing, but we shouldn't forget about
@@ -391,9 +398,14 @@ const ContextMenu = function() {
                 currently being focused (with mouse). But if the user moved a
                 mouse out of any item (for example hovering a special item),
                 then the prviously focused item gets blurred and if he'll press
-                a key up or key down the first/last item will become focused.
+                a key up or key down the first/last item will become focused. I
+                decided to listen for mouse movement on the overlay so there'll
+                be more chances that moving the mouse out of an item will lead
+                to blurring, then it was with the ._cm as a `addEventListener`s
+                target. However, such approach affects perfomance (not so much
+                that it can be noticed though).
             */
-            this._cm.addEventListener("mousemove", (event) => {
+            this._overlay.addEventListener("mousemove", (event) => {
                 if (this._normalItems.includes(event.target)) {
                     focusedN = this._normalItems.indexOf(event.target);
                     this._normalItems[focusedN].focus();
@@ -602,9 +614,14 @@ const ContextMenu = function() {
             this._overlay.remove();
 
             /*
-                Remove escape key press event listener.
+                Remove the escape key press event listener.
             */
             document.removeEventListener("keydown", this._escKeyListenerCallback);
+
+            /*
+                Remove the keyboard navigation event listener.
+            */
+            document.removeEventListener("keydown", this._kbNavigationListenerCallback);
 
             /*
                 Execute the closure callback.
