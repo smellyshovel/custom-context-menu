@@ -285,7 +285,7 @@ const ContextMenu = function() {
             });
 
             this._normalItems = this._itemElements.filter((item) => {
-                return item.dataset.cmItem === "" || "submenu-opener";
+                return item.dataset.cmItem === "" || item.dataset.cmItem === "submenu-opener";
             });
         }
 
