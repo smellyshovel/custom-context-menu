@@ -784,10 +784,12 @@ const ContextMenu = function() {
                 so.
             */
             this._node.addEventListener("mousedown", (event) => {
+                console.log("md");
                 event.stopPropagation();
             });
 
             this._node.addEventListener("contextmenu", (event) => {
+                console.log('cm');
                 event.stopPropagation();
                 event.preventDefault();
             });
