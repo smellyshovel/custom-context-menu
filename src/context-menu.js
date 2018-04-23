@@ -280,8 +280,8 @@ const ContextMenu = function() {
                 event listeners only to those items that are used to trigger
                 some `action`, but not to, for example, "separators".
             */
-            this._itemElements = this.items.map((item, i) => {
-                return new ContextMenu.Item(item, i, this);
+            this._itemElements = this.items.map((item) => {
+                return new ContextMenu.Item(item, this);
             });
 
             this._normalItems = this._itemElements.filter((item) => {
@@ -669,15 +669,14 @@ const ContextMenu = function() {
     ContextMenu._instances = [];
 
     ContextMenu.Item = class Item {
-        constructor(descr, index, contextMenu) {
+        constructor(descr, contextMenu) {
             /*
-                Store the description, index of the item and the CM that this
-                item belongs to as properties of the instance to have access to
-                them in methods.
+                Store the description and the CM that this item belongs to as
+                properties of the instance in order to have access to them in
+                methods.
             */
-            this.descr = descr;
-            this.index = index;
-            this.cm = contextMenu;
+            this._descr = descr;
+            this._cm = contextMenu;
 
             /*
                 Actually build the DOM node relying on the provided description
@@ -698,9 +697,9 @@ const ContextMenu = function() {
                 string he defines "special" items like "separator". Therefore
                 there're 2 deffirent ways of building the item.
             */
-            if (typeof this.descr === "object") {
+            if (typeof this._descr === "object") {
                 this._buildFromObject();
-            } else if (typeof this.descr === "string") {
+            } else if (typeof this._descr === "string") {
                 this._buildFromString();
             }
         }
@@ -715,14 +714,14 @@ const ContextMenu = function() {
                 possibility to focus on the item (which is used basically for
                 every tyoe of interaction with the item).
             */
-            let text = document.createTextNode(this.descr.title);
+            let text = document.createTextNode(this._descr.title);
             this._node = document.createElement("li");
             this._node.tabIndex = 0;
 
             this._node.appendChild(text);
             this._node.dataset.cmItem = "";
 
-            this._registerActionEventListener(this.descr.action);
+            this._registerActionEventListener();
         }
 
         _buildFromString() {
@@ -736,10 +735,10 @@ const ContextMenu = function() {
                 appropriate event listener (as it is in case of building the
                 item from an object).
             */
-            let type = ContextMenu.Item._specialItems[this.descr];
+            let type = ContextMenu.Item._specialItems[this._descr];
             this._node = document.createElement(type);
 
-            this._node.dataset.cmItem = this.descr;
+            this._node.dataset.cmItem = this._descr;
         }
 
         _registerActionEventListener() {
@@ -752,8 +751,8 @@ const ContextMenu = function() {
             */
             setTimeout(() => {
                 this._node.addEventListener("mouseup", (event) => {
-                    this.descr.action.call(this.cm);
-                    this.cm.close();
+                    this._descr.action.call(this._cm);
+                    this._cm.close();
                 });
             }, 200);
 
@@ -762,8 +761,8 @@ const ContextMenu = function() {
             */
             this._node.addEventListener("keydown", (event) => {
                 if (event.keyCode === 13) {
-                    this.descr.action.call(this.cm);
-                    this.cm.close();
+                    this._descr.action.call(this._cm);
+                    this._cm.close();
                 }
             });
 
@@ -784,12 +783,10 @@ const ContextMenu = function() {
                 so.
             */
             this._node.addEventListener("mousedown", (event) => {
-                console.log("md");
                 event.stopPropagation();
             });
 
             this._node.addEventListener("contextmenu", (event) => {
-                console.log('cm');
                 event.stopPropagation();
                 event.preventDefault();
             });
