@@ -228,21 +228,46 @@ void function() {
             document.addEventListener("keydown", this._keyClosureListenerCallback);
 
             /*
-                The CSM must also be closed if mouse enters any of the parent's
-                items (except for the the ._caller).
+                Assigning closure delay to the `delay` variable for shortness.
+                `timer` is used to store the delay timer (to be able to remove
+                it in some cases);
             */
             let delay = this.options.delay.closure,
                 timer = null;
 
+            /*
+                The CSM must also be closed if mouse enters any of the parent's
+                items (except for the the ._caller).
+            */
             this._mouseClosureListenerCallback = (event)  => {
                 if (this._parent._normalItems.includes(event.target)) {
                     if (event.target !== this._caller) {
+                        /*
+                            This check is necessary because if we omit it then
+                            the CSM will be closed if the mouse overed some
+                            other items (more than one) and then returned back
+                            to the caller, i.e. to prevent some sort of falsy
+                            closing.
+                        */
                         if (!timer) {
                             timer = setTimeout(() => {
                                 this.close();
                             }, delay);
                         }
+
+                    /*
+                        This `else` is triggered when the mouse enters the
+                        caller. So in this case we cleare the timer to avoid the
+                        undesirable CSM closure.
+                    */
                     } else {
+                        /*
+                            "Nulling" the timer is necessary to the proper work
+                            of the `if (!timer)` check above. The thing is that
+                            `clearTimeout` doesn't actually set the `timer`
+                            variable to `null`, so this check fails if we don't
+                            set the `timer`s value to `null` manually.
+                        */
                         clearTimeout(timer);
                         timer = null;
                     }
@@ -251,6 +276,12 @@ void function() {
 
             this._parent._cm.addEventListener("mouseover", this._mouseClosureListenerCallback);
 
+            /*
+                And the last event listener responsible for canceling the CSM
+                closure if the mouse returned back to the CSM itself. This event
+                listener will be removed automatically along with the CSM, so
+                there's no need to save it for later manual removal.
+            */
             this._cm.addEventListener("mouseenter", (event) => {
                 clearTimeout(timer);
                 timer = null;
@@ -386,12 +417,12 @@ void function() {
 
         close() {
             /*
-                This check is necessary to avoid multiple CSM closure. For
-                example a click on another caller may initiate the closure of
-                this CSM (in #_open method) and then `mouseover` some other
-                parent's item may also lead to closure of this CSM. And if the
-                first time the CSM has actually been closed then we don't need
-                this method to be invoked again.
+                This check is necessary to avoid multiple closing of a single
+                CSM. For example a click on another caller may initiate the
+                closure of this CSM (in #_open method) and then `mouseover` some
+                other parent's item may also lead to closure of this CSM
+                (after `delay` time). And if the first time the CSM has actually
+                been closed then we don't need this method to be invoked again.
             */
             if (!this._closureInProcess) {
                 /*
@@ -399,17 +430,33 @@ void function() {
                 */
                 this._closureInProcess = true;
 
+                /*
+                    Recursively close all the nested CSMs.
+                */
                 if (this._openedCSM) {
                     this._openedCSM.close();
                 }
 
                 console.log("Closing...");
 
+                /*
+                    Remove all the mess and restore the parent's key close event
+                    listener (it was previously saved and removed in the
+                    #_registerClosureEventListener).
+                */
                 this._parent._cm.removeEventListener("mouseover", this._mouseClosureListenerCallback);
                 document.removeEventListener("keydown", this._keyClosureListenerCallback);
                 document.addEventListener("keydown", this._parentKeyClosureListenerCallback);
 
+                /*
+                    Remove the CSM DOM element itself thereby removing all the
+                    attached to it event listeners and other stuff.
+                */
                 this._cm.remove();
+
+                /*
+                    Finally tell the parent that it no longer has an opened CSM.
+                */
                 this._parent._openedCSM = null;
                 // this._caller.focus();
             }
