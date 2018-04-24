@@ -73,7 +73,7 @@ void function() {
             entered the caller before the CSM will be opened.
         */
         this._node.addEventListener("mouseenter", (event) => {
-            this._CSMOpeningTimer = setTimeout(() => {
+            timer = setTimeout(() => {
                 subMenu._open(this._cm, this._node);
             }, delay);
         });
@@ -84,7 +84,7 @@ void function() {
             if a user just accidentially touched the caller with his mouse.
         */
         this._node.addEventListener("mouseleave", (event) => {
-            clearTimeout(this._CSMOpeningTimer);
+            clearTimeout(timer);
         });
 
         /*
@@ -227,7 +227,34 @@ void function() {
 
             document.addEventListener("keydown", this._keyClosureListenerCallback);
 
-            
+            /*
+                The CSM must also be closed if mouse enters any of the parent's
+                items (except for the the ._caller).
+            */
+            let delay = this.options.delay.closure,
+                timer = null;
+
+            this._mouseClosureListenerCallback = (event)  => {
+                if (this._parent._normalItems.includes(event.target)) {
+                    if (event.target !== this._caller) {
+                        if (!timer) {
+                            timer = setTimeout(() => {
+                                this.close();
+                            }, delay);
+                        }
+                    } else {
+                        clearTimeout(timer);
+                        timer = null;
+                    }
+                }
+            };
+
+            this._parent._cm.addEventListener("mouseover", this._mouseClosureListenerCallback);
+
+            this._cm.addEventListener("mouseenter", (event) => {
+                clearTimeout(timer);
+                timer = null;
+            });
         }
 
         _renderOverlay() {
@@ -358,13 +385,34 @@ void function() {
         }
 
         close() {
-            document.removeEventListener("keydown", this._keyClosureListenerCallback);
-            document.addEventListener("keydown", this._parentKeyClosureListenerCallback);
+            /*
+                This check is necessary to avoid multiple CSM closure. For
+                example a click on another caller may initiate the closure of
+                this CSM (in #_open method) and then `mouseover` some other
+                parent's item may also lead to closure of this CSM. And if the
+                first time the CSM has actually been closed then we don't need
+                this method to be invoked again.
+            */
+            if (!this._closureInProcess) {
+                /*
+                    I'll need this also when i'll add animation possibilities.
+                */
+                this._closureInProcess = true;
 
-            console.log("here");
-            this._cm.remove();
-            this._parent._openedCSM = null;
-            this._caller.focus();
+                if (this._openedCSM) {
+                    this._openedCSM.close();
+                }
+
+                console.log("Closing...");
+
+                this._parent._cm.removeEventListener("mouseover", this._mouseClosureListenerCallback);
+                document.removeEventListener("keydown", this._keyClosureListenerCallback);
+                document.addEventListener("keydown", this._parentKeyClosureListenerCallback);
+
+                this._cm.remove();
+                this._parent._openedCSM = null;
+                // this._caller.focus();
+            }
         }
 
         static get _defaultOptions() {
