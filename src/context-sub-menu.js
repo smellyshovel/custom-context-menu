@@ -23,7 +23,7 @@ void function() {
         /*
             The beginning is the same as in the "context-menu.js" file.
         */
-        let text = document.createTextNode(this.descr.title);
+        let text = document.createTextNode(this._descr.title);
         this._node = document.createElement("li");
         this._node.tabIndex = 0;
 
@@ -34,7 +34,7 @@ void function() {
             description object is instance of `ContextMenu.Sub`, then it means
             that a user wants to open a nested menu using the item.
         */
-        if (this.descr.action instanceof ContextMenu.Sub) {
+        if (this._descr.action instanceof ContextMenu.Sub) {
             /*
                 So in this case we must register some different from the typical
                 case event listeners. These ones are described in the
@@ -44,7 +44,7 @@ void function() {
                 open CSMs.
             */
             this._node.dataset.cmItem = "submenu-opener";
-            this._registerSubOpenEventListener();
+            this._registerSubOpeningEventListener();
         } else {
             /*
                 But if this file is linked to the page it doesn't yet mean that
@@ -54,94 +54,61 @@ void function() {
                 remember?) then it must be treated as usual.
             */
             this._node.dataset.cmItem = "";
-            this._registerActionEventListener(this.descr.action);
+            this._registerActionEventListener(this._descr.action);
         }
     };
 
-    ContextMenu.Item.prototype._registerSubOpenEventListener = function() {
+    ContextMenu.Item.prototype._registerSubOpeningEventListener = function() {
         /*
-            TODO: I guess this is the temporal state of the code. The things
-            should be reviewed and mostly rewritten.
+            `subMenu` is an instance of `ContextMenu.Sub` that is about to be
+            opened. `delay` is an amount of time before the CSM can actually be
+            opened if the opening was triggered by `mouseenter`.
         */
-        let openDelay = this.descr.action.options.delay.open;
+        let subMenu = this._descr.action,
+            delay = subMenu.options.delay.opening,
+            timer = null;
 
         /*
-            When the cursor enters the item (which is also called the caller of
-            a CSM that it's about to open), then we should start counting for the
-            `openDelay` amount of milliseconds before the CSM actually becomes
-            opened.
+            Start counting for the `delay` amount of milliseconds after a mouse
+            entered the caller before the CSM will be opened.
         */
         this._node.addEventListener("mouseenter", (event) => {
             this._CSMOpeningTimer = setTimeout(() => {
-                /*
-                    And if there're no CSMs are opened meanwhile, then we must
-                    open the one.
-                */
-                if (!this._openedCSM) {
-                    this._openedCSM = this.descr.action._open(this.cm, this._node);
-
-                /*
-                    There might also be the case where a user hovers his mouse
-                    over some other "submenu-opener" while the other CSM (the
-                    CSM of this caller) is already opened.
-                */
-                } else if (this._openedCSM !== this.descr.action) {
-                    /*
-                        In such case we must first close the opened CSM and then
-                        open the new one.
-                    */
-                    this._openedCSM.close();
-                    this._openedCSM = this.descr.action._open(this.cm, this._node);
-                }
-            }, openDelay);
+                subMenu._open(this._cm, this._node);
+            }, delay);
         });
 
         /*
-            But if mouse leaves the caller (before the CSM is opened), then we
-            must cancel the timer to prevent opening of the CSM.
+            But if the mouse leaves the caller for some reason then we must stop
+            counting by clearing the timer to prevent the CSM to be opened even
+            if a user just accidentially touched the caller with his mouse.
         */
         this._node.addEventListener("mouseleave", (event) => {
-            /*
-                The opening timer is stored in the ._CSMOpeningTimer property of
-                `this` object. Don't be confused by the fact that this code is
-                in the "context-sub-menu" file. This (current) method might (and
-                must) only be invoked on the `ContextMenu` instance, but not the
-                `ContextMenu.Sub`.
-            */
             clearTimeout(this._CSMOpeningTimer);
         });
 
         /*
-            We must also open the CSM immediately if a click happened on the
-            caller.
+            We must also open the CSM if he clicked (no matter which button) on
+            the caller.
         */
         this._node.addEventListener("mousedown", (event) => {
-            /*
-                If we don't clear the opening timer, then the second "instance"
-                of the CSM will be opened after the first one triggered by the
-                "mousedown" event.
-            */
-            clearTimeout(this._CSMOpeningTimer);
+            subMenu._open(this._cm, this._node);
+        });
 
-            /*
-                We are not interested in those clicks that happened after the
-                CSM has already been opened. So we must open the CSM for the
-                caller if only there're no more opened CSMs already existing.
-            */
-            if (!this._openedCSM) {
-                this._openedCSM = this.descr.action._open(this.cm, this._node);
-
-            /*
-                But the aforesaid is true only for those cases when the next
-                click has been made on the same caller. Else we must close the
-                existing CSM and open the new one.
-            */
-            } else if (this._openedCSM !== this.descr.action) {
-                this._openedCSM.close();
-                this._openedCSM = this.descr.action._open(this.cm, this._node);
+        /*
+            Open the CSM on "enter" or "arrow right" press.
+        */
+        this._node.addEventListener("keydown", (event) => {
+            if (event.keyCode === 13 || event.keyCode === 39) {
+                subMenu._open(this._cm, this._node, true);
             }
-        }, false);
+        });
 
+        /*
+            Behavior events listeners are also necessary to prevent a parent
+            CM closure on `mousedown` and `contextmenu` events (i.e. on left &
+            right clicks).
+        */
         this._registerBehaviorEventListener();
     };
 
@@ -164,9 +131,27 @@ void function() {
             this.options = options;
         }
 
-        _open(parent, caller) {
+        _open(parent, caller, keyTriggered) {
             /*
-                ._parent keeps the CM/CSM interaction with an item of which led
+                If there's no opened CSM already at this point (the point of the
+                CSM opening) then the `if` block below will just be skipped and
+                a new one will be opened. But if there's one that has been
+                opened before then we check whether the currently opening CSM is
+                the same as the already opened one. It it's so then we just do
+                nothing (don't open another instance of the same CSM). But if
+                the already opened CSM is defferent from the one that is
+                currently opened then we close the opened one and open this one.
+            */
+            if (parent._openedCSM) {
+                if (parent._openedCSM !== this) {
+                    parent._openedCSM.close();
+                } else {
+                    return false;
+                }
+            }
+
+            /*
+                ._parent holds the CM/CSM interaction with an item of which led
                 to creation of this instance. ._caller is the item (`li`
                 element) iteself.
             */
@@ -190,6 +175,20 @@ void function() {
                 the overlay for this CSM).
             */
             ContextMenu.prototype._open.call(this);
+
+            /*
+                If the CSM opening has been initiated by some key press then we
+                autofocus on the first item.
+            */
+            if (keyTriggered) {
+                this._normalItems[0].focus();
+                // this._focusedItemIndex = 0;
+            }
+
+            /*
+                Notify the parent CM/CSM that it has an opened CSM since now.
+            */
+            this._parent._openedCSM = this;
         }
 
         _renderOverlay() {
@@ -320,15 +319,16 @@ void function() {
         }
 
         close() {
-
+            this._cm.remove();
+            this._parent._openedCSM = null;
         }
 
         static get _defaultOptions() {
             // TODO: Object.create, prototype to parental to fallback to them?
             return {
                 delay: {
-                    open: 250,
-                    close: 250
+                    opening: 250,
+                    closure: 250
                 },
                 name: "",
                 closeOnKey: false,
