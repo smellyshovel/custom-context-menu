@@ -182,7 +182,7 @@ void function() {
             */
             if (keyTriggered) {
                 this._normalItems[0].focus();
-                // this._focusedItemIndex = 0;
+                this._focusedItemIndex = 0;
             }
 
             /*
