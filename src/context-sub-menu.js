@@ -186,9 +186,48 @@ void function() {
             }
 
             /*
+                Register event listeners that are responsible for tracking a
+                closure of the CSM.
+            */
+            this._registerClosureEventListener();
+
+            /*
                 Notify the parent CM/CSM that it has an opened CSM since now.
             */
             this._parent._openedCSM = this;
+        }
+
+        _registerClosureEventListener() {
+            /*
+                Save the parent's key closure event listener's callback. If the
+                parent is a CM then the callback is stored in the
+                ._escKeyListenerCallback property. If the parent is a CSM then
+                the callback is stored in ._keyClosureListenerCallback property.
+                Remove the parent's key closure event listener's callback in
+                order to prevent closure of all of the CMs/CSMs on key
+                responsible for the CM/CSM closure press and save as the
+                ._parentKeyClosureListenerCallback to restore (reattach) it
+                during the actual closure (in the #close method).
+            */
+            this._parentKeyClosureListenerCallback = this._parent._escKeyListenerCallback || this._parent._keyClosureListenerCallback;
+            document.removeEventListener("keydown", this._parentKeyClosureListenerCallback);
+
+            /*
+                Attach the same one for this instance so "escape" key press will
+                lead only to most nested CSM closure. This also affects "arrow
+                left" key presses. Save it as the ._keyClosureListenerCallback
+                property to remove it during the actual closure.
+            */
+            this._keyClosureListenerCallback = (event) => {
+                if (event.keyCode === 27 || event.keyCode === 37) {
+                    event.stopPropagation();
+                    this.close();
+                }
+            };
+
+            document.addEventListener("keydown", this._keyClosureListenerCallback);
+
+            
         }
 
         _renderOverlay() {
@@ -219,7 +258,7 @@ void function() {
         }
 
         _registerNavigationEventListener() {
-            ContextMenu.prototype._registerNavigationEventListener.call(this);
+            // ContextMenu.prototype._registerNavigationEventListener.call(this);
         }
 
         _determinePosition() {
@@ -319,8 +358,13 @@ void function() {
         }
 
         close() {
+            document.removeEventListener("keydown", this._keyClosureListenerCallback);
+            document.addEventListener("keydown", this._parentKeyClosureListenerCallback);
+
+            console.log("here");
             this._cm.remove();
             this._parent._openedCSM = null;
+            this._caller.focus();
         }
 
         static get _defaultOptions() {
