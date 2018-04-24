@@ -333,8 +333,8 @@ const ContextMenu = function() {
 
         _registerNavigationEventListener() {
             /*
-                `focusedN` is the number (index) of the element (item) in the
-                `._normalItems` array which is being currently focused. Its
+                ._focusedItemIndex is the number (index) of the element (item)
+                in the ._normalItems array which is being currently focused. Its
                 initial state "-1" is used as a starting point, like a note that
                 indicates that we should start from the very first/last item
                 (depending on what arrow key is pressed), but not to continue
@@ -342,8 +342,8 @@ const ContextMenu = function() {
                 also save the length of the array to avoid it recalculation on
                 every event triggering.
             */
-            let focusedN = -1,
-                length = this._normalItems.length;
+            let length = this._normalItems.length;
+            this._focusedItemIndex = -1;
 
             /*
                 All the event listeners attached to `document` must be removed
@@ -362,14 +362,14 @@ const ContextMenu = function() {
                 */
                 if (event.keyCode === 40) {
                     event.preventDefault();
-                    focusedN += focusedN > length - 2 ? -length + 1 : 1;
-                    this._normalItems[focusedN].focus();
+                    this._focusedItemIndex += this._focusedItemIndex > length - 2 ? -length + 1 : 1;
+                    this._normalItems[this._focusedItemIndex].focus();
                 }
 
                 if (event.keyCode === 38) {
                     event.preventDefault();
-                    focusedN = focusedN < 1 ? length - 1 : focusedN - 1;
-                    this._normalItems[focusedN].focus();
+                    this._focusedItemIndex = this._focusedItemIndex < 1 ? length - 1 : this._focusedItemIndex - 1;
+                    this._normalItems[this._focusedItemIndex].focus();
                 }
 
                 /*
@@ -389,29 +389,29 @@ const ContextMenu = function() {
                 Accessebility is a great thing, but we shouldn't forget about
                 normal users as well. If a user hovers the mouse over any item
                 (one of normal, i.e. excluding the special ones) it gets
-                focused and the `focusedN` variable's value from this point
-                holds the index of the focused item. That means that if the user
-                than stops his mouse and starts navigating using a keyboard,
-                then the next highlighted item is gonna be the one that is
-                after/before (depending on which key was pressed) the one that's
-                currently being focused (with mouse). But if the user moved a
-                mouse out of any item (for example hovering a special item),
-                then the prviously focused item gets blurred and if he'll press
-                a key up or key down the first/last item will become focused. I
-                decided to listen for mouse movement on the overlay so there'll
-                be more chances that moving the mouse out of an item will lead
-                to blurring, then it was with the ._cm as a `addEventListener`s
-                target. However, such approach affects perfomance (not so much
-                that it can be noticed though).
+                focused and the ._focusedItemIndex variable's value from this
+                point holds the index of the focused item. That means that if
+                the user than stops his mouse and starts navigating using a
+                keyboard, then the next highlighted item is gonna be the one
+                that is after/before (depending on which key was pressed) the
+                one that's currently being focused (with mouse). But if the user
+                moved a mouse out of any item (for example hovering a special
+                item), then the prviously focused item gets blurred and if he'll
+                press a key up or key down the first/last item will become
+                focused. I decided to listen for mouse movement on the overlay
+                so there'll be more chances that moving the mouse out of an item
+                will lead to blurring, then it was with the ._cm as a
+                `addEventListener`s target. However, such approach affects
+                perfomance (not so much that it can be noticed though).
             */
             this._overlay.addEventListener("mousemove", (event) => {
                 if (this._normalItems.includes(event.target)) {
-                    focusedN = this._normalItems.indexOf(event.target);
-                    this._normalItems[focusedN].focus();
+                    this._focusedItemIndex = this._normalItems.indexOf(event.target);
+                    this._normalItems[this._focusedItemIndex].focus();
                 } else {
                     if (this._normalItems.includes(document.activeElement)) {
-                        this._normalItems[focusedN].blur();
-                        focusedN = -1;
+                        this._normalItems[this._focusedItemIndex].blur();
+                        this._focusedItemIndex = -1;
                     }
                 }
             });
