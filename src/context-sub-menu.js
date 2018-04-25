@@ -223,46 +223,35 @@ void function() {
             document.addEventListener("keydown", this._keyClosureListenerCallback);
 
             /*
-                Assigning closure delay to the `delay` variable for shortness.
-                `timer` is used to store the delay timer (to be able to remove
-                it in some cases);
+                Assign closure delay to `delay` variable for shortness. `timer`
+                is used to store the delay timer (to be able to clear it in some
+                cases);
             */
             let delay = this.options.delay.closure,
                 timer = null;
 
             /*
-                The CSM must also be closed if mouse enters any of the parent's
-                items (except for the the ._caller).
+                Close the CSM after `delay` milliseconds if the mouse was moved
+                over any of the parent's items. But if the mouse returned back
+                to the caller then clear the timer this way preventing the CSM
+                from being closed. Checking for `timer` is necessary because
+                there're several timers are initiated if the mouse overed more
+                than 1 parent's item, so clearing the timer will only clear the
+                last initiated one. This is also the reason of why we not just
+                clearing the timer but also setting the `timer` variable to
+                null - the `clearTimeout` function does not do this for us. It
+                has to be done manually to have a possibility to check for the
+                `timer` absense.
             */
-            this._mouseClosureListenerCallback = (event)  => {
+            this._mouseClosureListenerCallback = (event) => {
                 if (this._parent._normalItems.includes(event.target)) {
                     if (event.target !== this._caller) {
-                        /*
-                            This check is necessary because if we omit it then
-                            the CSM will be closed if the mouse overed some
-                            other items (more than one) and then returned back
-                            to the caller, i.e. to prevent some sort of falsy
-                            closing.
-                        */
                         if (!timer) {
                             timer = setTimeout(() => {
                                 this.close();
                             }, delay);
                         }
-
-                    /*
-                        This `else` is triggered when the mouse enters the
-                        caller. So in this case we cleare the timer to avoid the
-                        undesirable CSM closure.
-                    */
                     } else {
-                        /*
-                            "Nulling" the timer is necessary to the proper work
-                            of the `if (!timer)` check above. The thing is that
-                            `clearTimeout` doesn't actually set the `timer`
-                            variable to `null`, so this check fails if we don't
-                            set the `timer`s value to `null` manually.
-                        */
                         clearTimeout(timer);
                         timer = null;
                     }
@@ -272,10 +261,12 @@ void function() {
             this._parent._cm.addEventListener("mouseover", this._mouseClosureListenerCallback);
 
             /*
-                And the last event listener responsible for canceling the CSM
-                closure if the mouse returned back to the CSM itself. This event
-                listener will be removed automatically along with the CSM, so
-                there's no need to save it for later manual removal.
+                Clear the timer (and set `timer` to null as well) if the mouse
+                returned back to the CSM. No need to save the callback for the
+                future removal because this event listener will be removed
+                automatically during the CSM closure (because there we delete
+                the ._cm that is an HTML element, and all the event listeners
+                assigned to an element are removed along with the element).
             */
             this._cm.addEventListener("mouseenter", (event) => {
                 clearTimeout(timer);
