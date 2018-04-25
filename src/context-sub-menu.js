@@ -193,8 +193,10 @@ void function() {
 
             /*
                 Notify the parent CM/CSM that it has an opened CSM since now.
+                Mark this CSM as opened.
             */
             this._parent._openedCSM = this;
+            this._opened = true;
         }
 
         _registerClosureEventListener() {
@@ -402,35 +404,45 @@ void function() {
         }
 
         close() {
-            console.log("Closing...");
-
             /*
-                Recursively close all the nested CSMs.
+                Closure events may happen twice (if not more, thank timers and
+                delays), so there's no need to actually close the CSM if it has
+                already been closed.
             */
-            if (this._openedCSM) {
-                this._openedCSM.close();
+            if (this._opened) {
+                console.log("Closing...");
+
+                /*
+                    Recursively close all the nested CSMs.
+                */
+                if (this._openedCSM) {
+                    this._openedCSM.close();
+                }
+
+                /*
+                    Remove all the mess and restore the parent's key close event
+                    listener (it was previously saved and removed in the
+                    #_registerClosureEventListener).
+                */
+                this._parent._cm.removeEventListener("mouseover", this._mouseClosureListenerCallback);
+                document.removeEventListener("keydown", this._keyClosureListenerCallback);
+                document.addEventListener("keydown", this._parentKeyClosureListenerCallback);
+
+                /*
+                    Remove the CSM DOM element itself thereby removing all the
+                    attached to it event listeners and other stuff.
+                */
+                this._cm.remove();
+
+                /*
+                    Finally tell the parent that it no longer has an opened CSM
+                    and mark the CSM as no longer opened (closed in other
+                    words).
+                */
+                this._parent._openedCSM = null;
+                this._opened = false;
+                // this._caller.focus();
             }
-
-            /*
-                Remove all the mess and restore the parent's key close event
-                listener (it was previously saved and removed in the
-                #_registerClosureEventListener).
-            */
-            this._parent._cm.removeEventListener("mouseover", this._mouseClosureListenerCallback);
-            document.removeEventListener("keydown", this._keyClosureListenerCallback);
-            document.addEventListener("keydown", this._parentKeyClosureListenerCallback);
-
-            /*
-                Remove the CSM DOM element itself thereby removing all the
-                attached to it event listeners and other stuff.
-            */
-            this._cm.remove();
-
-            /*
-                Finally tell the parent that it no longer has an opened CSM.
-            */
-            this._parent._openedCSM = null;
-            // this._caller.focus();
         }
 
         static get _defaultOptions() {
