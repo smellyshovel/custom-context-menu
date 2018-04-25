@@ -195,6 +195,8 @@ void function() {
                 Notify the parent CM/CSM that it has an opened CSM since now.
             */
             this._parent._openedCSM = this;
+
+            this._closureInProcess = false; // temporal solution
         }
 
         _registerClosureEventListener() {
@@ -424,7 +426,7 @@ void function() {
                 (after `delay` time). And if the first time the CSM has actually
                 been closed then we don't need this method to be invoked again.
             */
-            if (!this._closureInProcess) {
+            if (!this._closureInProcess) { // TODO: temporal solution. No closure after a first.
                 /*
                     I'll need this also when i'll add animation possibilities.
                 */
