@@ -164,27 +164,27 @@ const ContextMenu = function() {
 
             /*
                 The event listener responsible for the CM closure on the
-                "escape" key hit. We only need it to response once for 2
-                ressons: to prevent document event listeners list polluting and
+                "escape" key press. We only need it to respond once for 2
+                reasons: to prevent document event listeners list polluting and
                 to avoid fake event triggering after the CM has been closed. It
                 means that we must remove it later (in the #close to be exact),
                 but to do so we have to save the callback as the property of the
                 instance. Using `{once: true}` as the third option is not
-                suitable because a user may use some other keys during the time
-                the CM is opened, which means that this event will be fired and
-                removed even if the user pressed not the escape key. And this
-                means that he won't be able anymore to close the CM by pressing
-                the escape key. So we have to remove the event listener manually
-                in the #close method.
+                suitable because a user may press some other keys during the
+                time the CM is opened, which means that this event will be fired
+                and removed even if the user pressed not the "escape" key. And
+                this means that he won't be able anymore to close the CM by
+                pressing the "escape" key. So we have to remove the event
+                listener manually in the #close method.
             */
-            this._escKeyListenerCallback = (event) => {
+            this._keyClosureListenerCallback = (event) => {
                 if (event.keyCode === 27) {
                     event.stopPropagation();
                     this.close();
                 }
             };
 
-            document.addEventListener("keydown", this._escKeyListenerCallback);
+            document.addEventListener("keydown", this._keyClosureListenerCallback);
         }
 
         _open(event) {
@@ -613,9 +613,9 @@ const ContextMenu = function() {
             this._overlay.remove();
 
             /*
-                Remove the escape key press event listener.
+                Remove the "escape" key press event listener.
             */
-            document.removeEventListener("keydown", this._escKeyListenerCallback);
+            document.removeEventListener("keydown", this._keyClosureListenerCallback);
 
             /*
                 Remove the keyboard navigation event listener.
