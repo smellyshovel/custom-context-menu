@@ -60,9 +60,9 @@ void function() {
 
     ContextMenu.Item.prototype._registerSubOpeningEventListener = function() {
         /*
-            `subMenu` is an instance of `ContextMenu.Sub` that is about to be
-            opened. `delay` is an amount of time before the CSM can actually be
-            opened if the opening was triggered by `mouseenter`.
+            `subMenu` is the CSM that is attached to the caller. `delay` is the
+            amount of time before the CSM can actually be opened if the opening
+            was triggered by the `mouseenter` event.
         */
         let subMenu = this._descr.action,
             delay = subMenu.options.delay.opening,
@@ -96,7 +96,7 @@ void function() {
         });
 
         /*
-            Open the CSM on "enter" or "arrow right" press.
+            Open the CSM on "enter" or "arrow right" key press.
         */
         this._node.addEventListener("keydown", (event) => {
             if (event.keyCode === 13 || event.keyCode === 39) {
@@ -107,13 +107,13 @@ void function() {
         /*
             Behavior events listeners are also necessary to prevent a parent
             CM closure on `mousedown` and `contextmenu` events (i.e. on left &
-            right clicks).
+            right clicks on the caller).
         */
         this._registerBehaviorEventListener();
     };
 
     ContextMenu.Sub = class Sub {
-        // TODO: opened - flag when CSM is opened to countinue highlighting the caller item
+        // TODO: fakeFocused for highlighting
         constructor(items, options) {
             /*
                 Provide default (fallback) options values by setting the
@@ -135,12 +135,12 @@ void function() {
             /*
                 If there's no opened CSM already at this point (the point of the
                 CSM opening) then the `if` block below will just be skipped and
-                a new one will be opened. But if there's one that has been
-                opened before then we check whether the currently opening CSM is
-                the same as the already opened one. It it's so then we just do
+                a new one will be opened. But if there's one that has already
+                been opened then we check whether the currently opening CSM is
+                the same as the already opened one. If it's so then we just do
                 nothing (don't open another instance of the same CSM). But if
-                the already opened CSM is defferent from the one that is
-                currently opened then we close the opened one and open this one.
+                the already opened CSM is different from the one that is
+                currently opens then we close the opened one and open this one.
             */
             if (parent._openedCSM) {
                 if (parent._openedCSM !== this) {
@@ -177,8 +177,8 @@ void function() {
             ContextMenu.prototype._open.call(this);
 
             /*
-                If the CSM opening has been initiated by some key press then we
-                autofocus on the first item.
+                Autofocus on the first item if the CSM opening has been
+                initiated by some key press.
             */
             if (keyTriggered) {
                 this._normalItems[0].focus();
@@ -195,8 +195,6 @@ void function() {
                 Notify the parent CM/CSM that it has an opened CSM since now.
             */
             this._parent._openedCSM = this;
-
-            this._closureInProcess = false; // temporal solution
         }
 
         _registerClosureEventListener() {
@@ -418,50 +416,35 @@ void function() {
         }
 
         close() {
+            console.log("Closing...");
+
             /*
-                This check is necessary to avoid multiple closing of a single
-                CSM. For example a click on another caller may initiate the
-                closure of this CSM (in #_open method) and then `mouseover` some
-                other parent's item may also lead to closure of this CSM
-                (after `delay` time). And if the first time the CSM has actually
-                been closed then we don't need this method to be invoked again.
+                Recursively close all the nested CSMs.
             */
-            if (!this._closureInProcess) { // TODO: temporal solution. No closure after a first.
-                /*
-                    I'll need this also when i'll add animation possibilities.
-                */
-                this._closureInProcess = true;
-
-                /*
-                    Recursively close all the nested CSMs.
-                */
-                if (this._openedCSM) {
-                    this._openedCSM.close();
-                }
-
-                console.log("Closing...");
-
-                /*
-                    Remove all the mess and restore the parent's key close event
-                    listener (it was previously saved and removed in the
-                    #_registerClosureEventListener).
-                */
-                this._parent._cm.removeEventListener("mouseover", this._mouseClosureListenerCallback);
-                document.removeEventListener("keydown", this._keyClosureListenerCallback);
-                document.addEventListener("keydown", this._parentKeyClosureListenerCallback);
-
-                /*
-                    Remove the CSM DOM element itself thereby removing all the
-                    attached to it event listeners and other stuff.
-                */
-                this._cm.remove();
-
-                /*
-                    Finally tell the parent that it no longer has an opened CSM.
-                */
-                this._parent._openedCSM = null;
-                // this._caller.focus();
+            if (this._openedCSM) {
+                this._openedCSM.close();
             }
+
+            /*
+                Remove all the mess and restore the parent's key close event
+                listener (it was previously saved and removed in the
+                #_registerClosureEventListener).
+            */
+            this._parent._cm.removeEventListener("mouseover", this._mouseClosureListenerCallback);
+            document.removeEventListener("keydown", this._keyClosureListenerCallback);
+            document.addEventListener("keydown", this._parentKeyClosureListenerCallback);
+
+            /*
+                Remove the CSM DOM element itself thereby removing all the
+                attached to it event listeners and other stuff.
+            */
+            this._cm.remove();
+
+            /*
+                Finally tell the parent that it no longer has an opened CSM.
+            */
+            this._parent._openedCSM = null;
+            // this._caller.focus();
         }
 
         static get _defaultOptions() {
