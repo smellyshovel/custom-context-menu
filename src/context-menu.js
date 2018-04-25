@@ -179,7 +179,6 @@ const ContextMenu = function() {
             */
             this._keyClosureListenerCallback = (event) => {
                 if (event.keyCode === 27) {
-                    event.stopPropagation();
                     this.close();
                 }
             };

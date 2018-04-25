@@ -199,28 +199,23 @@ void function() {
 
         _registerClosureEventListener() {
             /*
-                Save the parent's key closure event listener's callback. If the
-                parent is a CM then the callback is stored in the
-                ._escKeyListenerCallback property. If the parent is a CSM then
-                the callback is stored in ._keyClosureListenerCallback property.
-                Remove the parent's key closure event listener's callback in
-                order to prevent closure of all of the CMs/CSMs on key
+                Save the parent's key closure event listener's callback and
+                remove it in order to prevent closure of all the CMs/CSMs on key
                 responsible for the CM/CSM closure press and save as the
-                ._parentKeyClosureListenerCallback to restore (reattach) it
-                during the actual closure (in the #close method).
+                ._parentKeyClosureListenerCallback to restore (re-register) it
+                later during the actual closure (in the #close method).
             */
-            this._parentKeyClosureListenerCallback = this._parent._escKeyListenerCallback || this._parent._keyClosureListenerCallback;
+            this._parentKeyClosureListenerCallback = this._parent._keyClosureListenerCallback;
             document.removeEventListener("keydown", this._parentKeyClosureListenerCallback);
 
             /*
-                Attach the same one for this instance so "escape" key press will
-                lead only to most nested CSM closure. This also affects "arrow
-                left" key presses. Save it as the ._keyClosureListenerCallback
-                property to remove it during the actual closure.
+                Attach an almost identical event listener that (unlike the CM's
+                one) is also fired when the "arrow left" key is pressed. If we
+                omit these manipulations then "escape" key press will close all
+                the opened CMs/CSMs whilst we need only `this` CSM to be closed.
             */
             this._keyClosureListenerCallback = (event) => {
                 if (event.keyCode === 27 || event.keyCode === 37) {
-                    event.stopPropagation();
                     this.close();
                 }
             };
