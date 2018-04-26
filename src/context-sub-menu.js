@@ -72,10 +72,12 @@ void function() {
             Start counting for the `delay` amount of milliseconds after a mouse
             entered the caller before the CSM will be opened.
         */
-        this._node.addEventListener("mouseenter", (event) => {
-            timer = setTimeout(() => {
-                subMenu._open(this._cm, this._node);
-            }, delay);
+        this._node.addEventListener("mousemove", (event) => {
+            if (!timer) {
+                timer = setTimeout(() => {
+                    subMenu._open(this._cm, this._node);
+                }, delay);
+            }
         });
 
         /*
@@ -83,8 +85,9 @@ void function() {
             counting by clearing the timer to prevent the CSM to be opened even
             if a user just accidentially touched the caller with his mouse.
         */
-        this._node.addEventListener("mouseleave", (event) => {
+        this._node.addEventListener("blur", (event) => {
             clearTimeout(timer);
+            timer = null;
         });
 
         /*
@@ -92,6 +95,9 @@ void function() {
             the caller.
         */
         this._node.addEventListener("mousedown", (event) => {
+            clearTimeout(timer);
+            timer = null;
+
             subMenu._open(this._cm, this._node);
         });
 
@@ -99,6 +105,9 @@ void function() {
             Open the CSM on "enter" or "arrow right" key press.
         */
         this._node.addEventListener("keydown", (event) => {
+            clearTimeout(timer);
+            timer = null;
+
             if (event.keyCode === 13 || event.keyCode === 39) {
                 subMenu._open(this._cm, this._node, true);
             }
