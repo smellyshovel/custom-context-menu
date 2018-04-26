@@ -407,9 +407,9 @@ void function() {
 
         _markAsVisible() {
             /*
-                Nothing special here for a CSM.
+                No need to re-mark the overlay once again, so just mark the CSM.
             */
-            ContextMenu.prototype._markAsVisible.call(this);
+            this._cm.className = "visible";
         }
 
         close() {
@@ -438,15 +438,44 @@ void function() {
                 document.addEventListener("keydown", this._parentKeyClosureListenerCallback);
 
                 /*
-                    Remove the CSM DOM element itself thereby removing all the
-                    attached to it event listeners and other stuff.
+                    Remove "visible" class from the CSM. First of all that will
+                    trigger the transition and secondly the next variable would
+                    have incorrect value without that.
                 */
-                this._cm.remove();
+                this._cm.className = "";
+
+                /*
+                    Get the duration of the transition. If there's no transition
+                    then the variable's value will be `0`.
+                */
+                let transDur = parseFloat(getComputedStyle(this._cm).transitionDuration);
+
+                /*
+                    If the CM has the transition then its duration is more than
+                    0 for sure. Such way we determine whether the transition is
+                    applied to the element.
+                */
+                if (transDur > 0) {
+
+                    /*
+                        Remove the CSM after the transition ends.
+                    */
+                    this._cm.addEventListener("transitionend", (event) => {
+                        this._cm.remove();
+                    });
+                } else {
+
+                    /*
+                        If there's no transitions applied to the CSM then we can
+                        safely remove it just in time.
+                    */
+                    this._cm.remove();
+                }
 
                 /*
                     Finally tell the parent that it no longer has an opened CSM
                     and mark the CSM as no longer opened (closed in other
-                    words).
+                    words) and mark the CSM itself as closed (not `_opened`).
                 */
                 this._parent._openedCSM = null;
                 this._opened = false;

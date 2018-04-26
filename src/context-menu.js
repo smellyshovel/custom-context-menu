@@ -624,8 +624,8 @@ const ContextMenu = function() {
             this._overlay.className = "";
 
             /*
-                Getting the durations of transitions. If there's no transition
-                then the variable's value will be `0`.
+                Get the durations of transitions. If there's no transition then
+                the variable's value will be `0`.
             */
             let cmTransDur = parseFloat(getComputedStyle(this._cm).transitionDuration),
                 overlayTransDur = parseFloat(getComputedStyle(this._overlay).transitionDuration);
@@ -676,7 +676,7 @@ const ContextMenu = function() {
                 */
                 this._overlay.remove();
             }
-            
+
             /*
                 Execute the closure callback.
             */
