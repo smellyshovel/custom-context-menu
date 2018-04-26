@@ -606,12 +606,6 @@ const ContextMenu = function() {
             document.documentElement.style.overflow = "";
 
             /*
-                Removing the overlay means removing all the footprints of the
-                context menu together with it's event listeners.
-            */
-            this._overlay.remove();
-
-            /*
                 Remove the "escape" key press event listener.
             */
             document.removeEventListener("keydown", this._keyClosureListenerCallback);
@@ -621,6 +615,68 @@ const ContextMenu = function() {
             */
             document.removeEventListener("keydown", this._kbNavigationListenerCallback);
 
+            /*
+                Remove "visible" class from the CM and the overlay. First of all
+                that will trigger the transitions and secondly without that the
+                next two variables would have incorrect values.
+            */
+            this._cm.className = "";
+            this._overlay.className = "";
+
+            /*
+                Getting the durations of transitions. If there's no transition
+                then the variable's value will be `0`.
+            */
+            let cmTransDur = parseFloat(getComputedStyle(this._cm).transitionDuration),
+                overlayTransDur = parseFloat(getComputedStyle(this._overlay).transitionDuration);
+
+            /*
+                If either the CM or the overlay has the transition then its
+                duration is more than 0 for sure. Such way we determine whether
+                the transition is applied to the element.
+            */
+            if (cmTransDur > 0 || overlayTransDur > 0) {
+
+                /*
+                    If the overlay becomes "invisible" faster than the CM then
+                    there's no need to remove the CM first. It's enough just to
+                    wait until the CM's transition is overed and then delete the
+                    overlay (thereby deleting the CM itself, because it's a
+                    child of the CSM). But if the overlay becomes "invisible"
+                    after the CM than we have to remove the CM after it became
+                    "invisible" (in order to prevent interaction with it) and
+                    remove the overlay only after it itself became "invisible".
+                */
+                if (cmTransDur >= overlayTransDur) {
+                    this._cm.addEventListener("transitionend", (event) => {
+                        this._overlay.remove();
+                    });
+                } else {
+                    this._cm.addEventListener("transitionend", (event) => {
+
+                        /*
+                            Both event listeners' callbacks will be fired at the
+                            same time if we don't stop propagation of this
+                            event.
+                        */
+                        event.stopPropagation();
+                        this._cm.remove();
+                    });
+
+                    this._overlay.addEventListener("transitionend", (event) => {
+                        this._overlay.remove();
+                    });
+                }
+            } else {
+
+                /*
+                    If there're no transitions applied to both of the elements
+                    then we can safely remove just the overlay right in time
+                    (thereby removing the CM).
+                */
+                this._overlay.remove();
+            }
+            
             /*
                 Execute the closure callback.
             */
