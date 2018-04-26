@@ -313,7 +313,59 @@ void function() {
         }
 
         _registerNavigationEventListener() {
-            // ContextMenu.prototype._registerNavigationEventListener.call(this);
+            /*
+                Alright, here goes the interesting part (and a bit complicated
+                as well). The first question raises: why can't we just invoke
+                the relevant `ContextMenu.prototype`s method on `this` instance
+                here? The reason is simple: because 2 same event listeners will
+                be registered on the document. Why is this bad though? Because
+                when the CSM is opened and, for example, "arrow up" key is
+                pressed the first element focused would be some parent's item,
+                and only after that an item of `this` instance will gain focus.
+                One can argue: there may be only one item with focus on the
+                page. And that's true, though that doen't negate the fact that
+                the parent's item is focused too for some period of time, even
+                if very-very small. The thing is that this time is more than
+                enough for a browser to scroll the overflowed parent CM/CSM so
+                the focused item can be visible.
+            */
+
+            /*
+                So first of all we must remove the parent-defined event
+                listener (and, of course, save it in order to register it again
+                later on so after the closure of the CSM the parent CM/CSM might
+                again become navigatable via a keyboard).
+            */
+            this._parentKbNavigationListenerCallback = this._parent._kbNavigationListenerCallback;
+            document.removeEventListener("keydown", this._parentKbNavigationListenerCallback);
+
+            /*
+                ._focusedItemIndex is necessary to present as instance's
+                property. You can find out why in the same method of the
+                `ContextMenu`s prototype.
+            */
+            this._focusedItemIndex = -1;
+
+            /*
+                And this is why we saved the "actual callback" in the
+                `ContextMenu`s source - to reuse it here, thereby saving another
+                ~30 lines of copy-paste. The approach here is almost identical
+                with the one used in the #_registerClosureEventListener method.
+                But there we don't need exactly the parent's callback (because
+                we do also need to track "arrow left" key presses), and here the
+                callbacks are absolutely the same, so there's no reason to
+                redefine it. This is why the `_kbNavigationActualCallback` can
+                not be the part of `_kbNavigationListenerCallback` - the first
+                one must be a regular function (to be able to be invoked on
+                different objects) and the second one must be (or at least
+                should be) an arrow function in order to invoke the regular
+                function on `this` object.
+            */
+            this._kbNavigationListenerCallback = (event) => {
+                this._parent._kbNavigationActualCallback.call(this, event);
+            }
+
+            document.addEventListener("keydown", this._kbNavigationListenerCallback);
         }
 
         _determinePosition() {
@@ -436,6 +488,8 @@ void function() {
                 this._parent._cm.removeEventListener("mouseover", this._mouseClosureListenerCallback);
                 document.removeEventListener("keydown", this._keyClosureListenerCallback);
                 document.addEventListener("keydown", this._parentKeyClosureListenerCallback);
+                document.removeEventListener("keydown", this._kbNavigationListenerCallback);
+                document.addEventListener("keydown", this._parentKbNavigationListenerCallback);
 
                 /*
                     Remove "visible" class from the CSM. First of all that will

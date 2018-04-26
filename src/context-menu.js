@@ -337,18 +337,19 @@ const ContextMenu = function() {
                 initial state "-1" is used as a starting point, like a note that
                 indicates that we should start from the very first/last item
                 (depending on what arrow key is pressed), but not to continue
-                incrementing/decrementing this value when a key is pressed. We
-                also save the length of the array to avoid it recalculation on
-                every event triggering.
+                incrementing/decrementing this value when a key is pressed.
             */
-            let length = this._normalItems.length;
             this._focusedItemIndex = -1;
 
             /*
-                All the event listeners attached to `document` must be removed
-                after the CM closure, so we have to save the callback.
+                This method is used with the DRY philosophy in mind. You can
+                think of it as of any other `ContextMenu.prototype`s regular
+                method, but it's defined here for sakes of consistency. It is
+                basically just a regular method that can be (and is) shared with
+                other classes that might want to use it. Pay attention that it's
+                not an arrow function. It's very important.
             */
-            this._kbNavigationListenerCallback = (event) => {
+            this._kbNavigationActualCallback = function(event) {
                 /*
                     Each time the arrow up or arrow down key is pressed we
                     determine the item to be focused (or rather it's index) and
@@ -361,13 +362,13 @@ const ContextMenu = function() {
                 */
                 if (event.keyCode === 40) {
                     event.preventDefault();
-                    this._focusedItemIndex += this._focusedItemIndex > length - 2 ? -length + 1 : 1;
+                    this._focusedItemIndex += this._focusedItemIndex > this._normalItems.length - 2 ? -this._normalItems.length + 1 : 1;
                     this._normalItems[this._focusedItemIndex].focus();
                 }
 
                 if (event.keyCode === 38) {
                     event.preventDefault();
-                    this._focusedItemIndex = this._focusedItemIndex < 1 ? length - 1 : this._focusedItemIndex - 1;
+                    this._focusedItemIndex = this._focusedItemIndex < 1 ? this._normalItems.length - 1 : this._focusedItemIndex - 1;
                     this._normalItems[this._focusedItemIndex].focus();
                 }
 
@@ -382,6 +383,22 @@ const ContextMenu = function() {
                 }
             };
 
+            /*
+                3 additional lines of code here allow us to save more than 10
+                times more of the CSM code. This keyboard navigation listener's
+                callback is saved (is not an anonymous arrow function) for 2
+                reasons: first of all to be able to remove it later during the
+                CM closure process, and the second is to be able to remove it
+                after a CSM opening. Why it is necessary you can find more about
+                in the CSM's source.
+            */
+            this._kbNavigationListenerCallback = (event) => {
+                this._kbNavigationActualCallback.call(this, event);
+            }
+
+            /*
+                Register the event listener itself.
+            */
             document.addEventListener("keydown", this._kbNavigationListenerCallback);
 
             /*
