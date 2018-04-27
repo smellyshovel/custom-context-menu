@@ -618,6 +618,16 @@ const ContextMenu = function() {
 
         close() {
             /*
+                Removing the overlay (which is the core of this method) may seem
+                enough to close all the nested CSMs, but if we want the closing
+                transitions of a CSM to work, then we have to invoke the CSM's
+                #close method manually.
+            */
+            if (this._openedCSM) {
+                this._openedCSM.close();
+            }
+
+            /*
                 Restore the initial `overflow` CSS property's value.
             */
             document.documentElement.style.overflow = "";

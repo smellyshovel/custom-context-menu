@@ -515,6 +515,12 @@ void function() {
                         Remove the CSM after the transition ends.
                     */
                     this._cm.addEventListener("transitionend", (event) => {
+                        /*
+                            Stopping the event propagation is necessary to avoid
+                            premature closing of the overlay (if its transition
+                            takes more time than the root CM's transition).
+                        */
+                        event.stopPropagation();
                         this._cm.remove();
                     });
                 } else {
