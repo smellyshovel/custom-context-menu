@@ -359,10 +359,16 @@ void function() {
                 one must be a regular function (to be able to be invoked on
                 different objects) and the second one must be (or at least
                 should be) an arrow function in order to invoke the regular
-                function on `this` object.
+                function on `this` object. It's also necessary to save the
+                parent's actual callback as this instance's property so the CSM
+                of this CSM (if any) would be able to use it as well. The same
+                behavior might be achieved via recursion/while-loop though, but
+                I consider this approach a bit more elegant.
             */
+            this._kbNavigationActualCallback = this._parent._kbNavigationActualCallback;
+
             this._kbNavigationListenerCallback = (event) => {
-                this._parent._kbNavigationActualCallback.call(this, event);
+                this._kbNavigationActualCallback.call(this, event);
             }
 
             document.addEventListener("keydown", this._kbNavigationListenerCallback);
