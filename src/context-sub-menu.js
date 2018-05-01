@@ -227,7 +227,7 @@ void function() {
             */
             this._keyClosureListenerCallback = (event) => {
                 if (event.keyCode === 27 || event.keyCode === 37) {
-                    this.close();
+                    this.close(true);
                 }
             };
 
@@ -470,7 +470,7 @@ void function() {
             this._cm.className = "visible";
         }
 
-        close() {
+        close(keyTriggered) {
             /*
                 Closure events may happen twice (if not more, thank timers and
                 delays), so there's no need to actually close the CSM if it has
@@ -545,7 +545,17 @@ void function() {
                 */
                 this._parent._openedCSM = null;
                 this._opened = false;
-                // this._caller.focus();
+
+                /*
+                    Focus the caller if the closure was triggered by a key (but
+                    not using a mouse). No need to explicitly set the
+                    ._focusedItemIndex of the parent because the CSM has somehow
+                    been opened, right? I.e. the ._focusedItemIndex is already
+                    set correct.
+                */
+                if (keyTriggered) {
+                    this._caller.focus();
+                }
             }
         }
 
