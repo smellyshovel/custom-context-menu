@@ -302,6 +302,8 @@ void function() {
                 duplication.
             */
             ContextMenu.prototype._buildItemElements.call(this);
+
+            // this._allNormalItems = this._parent._normalItems.concat(this._normalItems);
         }
 
         _render() {
@@ -372,6 +374,36 @@ void function() {
             }
 
             document.addEventListener("keydown", this._kbNavigationListenerCallback);
+
+            // /*
+            //     Mouse
+            // */
+            // this._overlay.removeEventListener("mousemove", this._parent._mouseNavigationListenerCallback)
+            //
+            // this._mouseNavigationListenerCallback = (event) => {
+            //     if (this._allNormalItems.includes(event.target)) {
+            //         this._focusedItemIndex = this._allNormalItems.indexOf(event.target);
+            //         this._allNormalItems[this._focusedItemIndex].focus();
+            //     } else {
+            //         if (this._allNormalItems.includes(document.activeElement)) {
+            //             this._allNormalItems[this._focusedItemIndex].blur();
+            //             this._focusedItemIndex = -1;
+            //         }
+            //     }
+            // };
+            //
+            // this._overlay.addEventListener("mousemove", this._mouseNavigationListenerCallback);
+
+            let root = (() => {
+                let parent = this;
+                while("_parent" in parent) {
+                  parent = parent._parent;
+                }
+
+                return parent;
+            })();
+
+            root._normalItems = root._normalItems.concat(this._normalItems);
         }
 
         _determinePosition() {
@@ -496,6 +528,17 @@ void function() {
                 document.addEventListener("keydown", this._parentKeyClosureListenerCallback);
                 document.removeEventListener("keydown", this._kbNavigationListenerCallback);
                 document.addEventListener("keydown", this._parentKbNavigationListenerCallback);
+
+                let root = (() => {
+                    let parent = this;
+                    while("_parent" in parent) {
+                      parent = parent._parent;
+                    }
+
+                    return parent;
+                })();
+
+                root._normalItems.splice(-this._normalItems.length, this._normalItems.length)
 
                 /*
                     Remove "visible" class from the CSM. First of all that will

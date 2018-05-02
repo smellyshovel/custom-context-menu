@@ -416,11 +416,11 @@ const ContextMenu = function() {
                 press a key up or key down the first/last item will become
                 focused. I decided to listen for mouse movement on the overlay
                 so there'll be more chances that moving the mouse out of an item
-                will lead to blurring, then it was with the ._cm as a
+                will lead to blurring, than it was with the ._cm as a
                 `addEventListener`s target. However, such approach affects
                 perfomance (not so much that it can be noticed though).
             */
-            this._overlay.addEventListener("mousemove", (event) => {
+            this._mouseNavigationListenerCallback = (event) => {
                 if (this._normalItems.includes(event.target)) {
                     this._focusedItemIndex = this._normalItems.indexOf(event.target);
                     this._normalItems[this._focusedItemIndex].focus();
@@ -430,7 +430,9 @@ const ContextMenu = function() {
                         this._focusedItemIndex = -1;
                     }
                 }
-            });
+            }
+
+            this._overlay.addEventListener("mousemove", this._mouseNavigationListenerCallback);
         }
 
         _determinePosition(event) {
