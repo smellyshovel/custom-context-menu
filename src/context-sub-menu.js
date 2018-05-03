@@ -155,6 +155,15 @@ void function() {
                 if (parent._openedCSM !== this) {
                     parent._openedCSM.close();
                 } else {
+                    /*
+                        This part only takes place if the CSM is opened and the
+                        mouse returns to the caller. In such case we should
+                        reset the ._focusedItemIndex property, so when "arrow
+                        up" or "arrow down" key is pressed the first/last item
+                        of the CSM is highlighted, but not the next/previous one
+                        (counting from the previously highlighted).
+                    */
+                    this._focusedItemIndex = -1;
                     return false;
                 }
             }
