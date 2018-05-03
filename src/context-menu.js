@@ -208,7 +208,8 @@ const ContextMenu = function() {
                 Add event listeners that are responsible for hightlighting
                 (which happens by focusing on) an item.
             */
-            this._registerNavigationEventListener();
+            this._regKbNavEL();
+            this._regMouseNavEL();
 
             /*
                 Determine where on the page the context menu must appear.
@@ -330,7 +331,7 @@ const ContextMenu = function() {
             this._overlay.appendChild(this._cm);
         }
 
-        _registerNavigationEventListener() {
+        _regKbNavEL() {
             /*
                 ._focusedItemIndex is the number (index) of the element (item)
                 in the ._normalItems array which is being currently focused. Its
@@ -400,7 +401,9 @@ const ContextMenu = function() {
                 Register the event listener itself.
             */
             document.addEventListener("keydown", this._kbNavigationListenerCallback);
+        }
 
+        _regMouseNavEL() {
             /*
                 Accessebility is a great thing, but we shouldn't forget about
                 normal users as well. If a user hovers the mouse over any item
@@ -420,19 +423,18 @@ const ContextMenu = function() {
                 `addEventListener`s target. However, such approach affects
                 perfomance (not so much that it can be noticed though).
             */
-            this._mouseNavigationListenerCallback = (event) => {
-                if (this._normalItems.includes(event.target)) {
-                    this._focusedItemIndex = this._normalItems.indexOf(event.target);
-                    this._normalItems[this._focusedItemIndex].focus();
-                } else {
-                    if (this._normalItems.includes(document.activeElement)) {
-                        this._normalItems[this._focusedItemIndex].blur();
-                        this._focusedItemIndex = -1;
-                    }
-                }
-            }
 
-            this._overlay.addEventListener("mousemove", this._mouseNavigationListenerCallback);
+            this._normalItems.forEach((item, i) => {
+                item.addEventListener("mousemove", (event) => {
+                    this._focusedItemIndex = i;
+                    item.focus();
+                });
+
+                item.addEventListener("mouseleave", (event) => {
+                    this._focusedItemIndex = -1;
+                    item.blur();
+                });
+            });
         }
 
         _determinePosition(event) {
