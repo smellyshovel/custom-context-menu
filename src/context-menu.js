@@ -295,7 +295,7 @@ const ContextMenu = function() {
             });
 
             this._normalItems = this._itemElements.filter((item) => {
-                return item.dataset.cmItem === "" || item.dataset.cmItem === "submenu-opener";
+                return !item.dataset.cmItemSpecial;
             });
         }
 
@@ -815,7 +815,7 @@ const ContextMenu = function() {
             this._node.tabIndex = 0;
 
             this._node.appendChild(text);
-            this._node.dataset.cmItem = "";
+            this._node.dataset.cmItem = this._descr.title;
 
             this._registerActionEventListener();
         }
@@ -834,7 +834,7 @@ const ContextMenu = function() {
             let type = ContextMenu.Item._specialItems[this._descr];
             this._node = document.createElement(type);
 
-            this._node.dataset.cmItem = this._descr;
+            this._node.dataset.cmItemSpecial = this._descr;
         }
 
         _registerActionEventListener() {

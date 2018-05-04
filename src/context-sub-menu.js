@@ -28,6 +28,7 @@ void function() {
         this._node.tabIndex = 0;
 
         this._node.appendChild(text);
+        this._node.dataset.cmItem = this._descr.title;
 
         /*
             The interesting part goes here. If the `action` property of the
@@ -43,7 +44,7 @@ void function() {
                 user may then add some styles to those items that are used to
                 open CSMs.
             */
-            this._node.dataset.cmItem = "submenu-opener";
+            this._node.dataset.cmItemCaller = "";
             this._registerSubOpeningEventListener();
         } else {
             /*
@@ -53,7 +54,6 @@ void function() {
                 instance of `ContextMenu.Sub` (but it's still an object,
                 remember?) then it must be treated as usual.
             */
-            this._node.dataset.cmItem = "";
             this._registerActionEventListener(this._descr.action);
         }
     };
@@ -311,8 +311,6 @@ void function() {
                 duplication.
             */
             ContextMenu.prototype._buildItemElements.call(this);
-
-            // this._allNormalItems = this._parent._normalItems.concat(this._normalItems);
         }
 
         _render() {
