@@ -558,20 +558,16 @@ const ContextMenu = function() {
                         `data-cm-item="arrow"` attribute may also be treated as
                         "special", but we don't add it to the list of allowed
                         specials because we don't want a user to use arrows
-                        anywhere else (among items). We also use the same
-                        identidier for both "up" and "down" because they will
-                        probably be styled the identical. It's still possible to
-                        overcome this restriction though.
+                        anywhere else (among items for example). We also use the
+                        same identidier for both "up" and "down" because they
+                        will probably be styled the identical. It's still
+                        possible to overcome this restriction though.
                     */
                     let arrowUp = document.createElement("div");
-                    let arrowUpChar = document.createTextNode("▲");
-                    arrowUp.appendChild(arrowUpChar);
-                    arrowUp.dataset.cmItem = "arrow";
+                    arrowUp.dataset.cmItemSpecial = "arrow up";
 
                     let arrowDown = document.createElement("div");
-                    let arrowDownChar = document.createTextNode("▼");
-                    arrowDown.appendChild(arrowDownChar);
-                    arrowDown.dataset.cmItem = "arrow";
+                    arrowDown.dataset.cmItemSpecial = "arrow down";
 
                     /*
                         Insert the arrows as the first and the last elements of
