@@ -69,6 +69,7 @@ const ContextMenu = function() {
                     */
                     if (!this.options.disabled) {
                         this._open(event);
+                        this._registerClosureEventListener();
                     }
                 }
             };
@@ -78,10 +79,19 @@ const ContextMenu = function() {
                 then register the event listener that is responsible for
                 tracking the CM closure.
             */
-            this._target.addEventListener("contextmenu", (event) => {
-                handleCall(event);
-                this._registerClosureEventListener();
-            });
+
+            if (this._target instanceof NodeList) {
+                this._target.forEach((target) => {
+                    target.addEventListener("contextmenu", (event) => {
+                        handleCall(event);
+
+                    });
+                })
+            } else {
+                this._target.addEventListener("contextmenu", (event) => {
+                    handleCall(event);
+                });
+            }
         }
 
         _registerClosureEventListener() {
