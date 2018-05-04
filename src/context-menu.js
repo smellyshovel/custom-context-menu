@@ -7,97 +7,90 @@ const ContextMenu = function() {
     class ContextMenu {
         constructor(target, items, options) {
             /*
-                Check target for errors. If there is a CM instance already
-                defined for the same target as the one that's being created now
-                then return a found instance instead of "recreating" the CM.
-            */
-            let alreadyDefined = ContextMenu._checkTarget(target);
-            if (alreadyDefined) return alreadyDefined;
-
-            /*
                 Provide default (fallback) options values by setting the
-                prototype of the `options` object to the ::_defaultOptions
-                object.
+                prototype of the `options` object to the ::_defaultOptions one.
+                Thus if an option's value is `undefined` it will be taken from
+                from the prototype.
             */
-            Object.setPrototypeOf(options, ContextMenu._defaultOptions);
+            if (typeof options === "object") {
+                Object.setPrototypeOf(options, ContextMenu._defaultOptions);
+            } else {
+                options = ContextMenu._defaultOptions;
+            }
 
             /*
-                Make items and options to be the properties of the CM instance
-                to have an access to them in methods and outside. This provides
-                a possibility to dinamically add new items and change options.
+                Make `items` and `options` to be the properties of the instance
+                in order to have an access to them in methods and outside. This
+                also provides a possibility to dinamically add new items and change
+                options.
             */
-            this._target = target;
             this.items = items;
             this.options = options;
-
-            /*
-                Save the instance to prevent "recreating".
-            */
-            ContextMenu._instances.push(this);
 
             /*
                 Register the event listener that is responsible for tracking the
                 CM invokation.
             */
-            this._registerOpeningEventListener();
+            this._regOpeningEL(target);
         }
 
-        _registerOpeningEventListener() {
+        _regOpeningEL(target) {
+            /*
+                Put a callback in a separate function то avoid code duplication.
+            */
             let handleCall = (event) => {
                 /*
-                    Prevent opening of the CMs that are defined for those elements
-                    that are below the `this.target` in the DOM.
+                    Prevent opening of the CMs that are defined for those
+                    elements that are below the target in the DOM.
                 */
                 event.stopPropagation();
 
                 /*
-                    If `defaultOnAlt` is `true` then check whether the alt key was
-                    not holded when the event was triggered or if it was. If it was
-                    then the code below just won't be executed, i.e. the default
-                    context menu will appear. But if `defaultOnAlt` is `false`, then
-                    just show a custom context menu in any way.
+                    If the "nativeOnAlt" option is true then check whether the
+                    "alt" key was not holded when the event occurred or if it
+                    was. If it was then the code below just won't be executed,
+                    i.e. the browser's native context menu will appear. But if
+                    the "nativeOnAlt" is false then prevent the native context
+                    menu appearance and open the custom one.
                 */
-                if (this.options.defaultOnAlt ? event.altKey === false : true) {
-                    /*
-                        Prevent default (browser) context menu from appearing.
-                    */
+                if (this.options.nativeOnAlt ? event.altKey === false : true) {
                     event.preventDefault();
 
                     /*
-                        Open the context menu if it's not `disabled`. Else just
-                        remind that it is.
+                        Open the CM if it's not `disabled` and register the
+                        event listener that is responsible for tracking the CM
+                        closure.
                     */
                     if (!this.options.disabled) {
                         this._open(event);
-                        this._registerClosureEventListener();
+                        this._regClosureEL();
                     }
                 }
             };
 
             /*
-                When the `contextmenu` event takes place, handle it first and
-                then register the event listener that is responsible for
-                tracking the CM closure.
+                If the target is a collection of DOM elements then register the
+                event listener for each of them. If it's a single element then
+                register directly for this element.
             */
-
-            if (this._target instanceof NodeList) {
-                this._target.forEach((target) => {
+            if (target instanceof NodeList) {
+                target.forEach((target) => {
                     target.addEventListener("contextmenu", (event) => {
                         handleCall(event);
-
                     });
                 })
             } else {
-                this._target.addEventListener("contextmenu", (event) => {
+                target.addEventListener("contextmenu", (event) => {
                     handleCall(event);
                 });
             }
         }
 
-        _registerClosureEventListener() {
+        _regClosureEL() {
+            // noRecreate -> impenetrable. Currently doesn't work. Why?
             /*
                 We need 2 sets of different event listeners to track the context
-                menu closure. The first one is used if the `noRecreate` option
+                menu closure. The first one is used if the "noRecreate" option
                 is `true` and the second one if `false`.
             */
             if (this.options.noRecreate) {
@@ -720,28 +713,11 @@ const ContextMenu = function() {
             this.options.callback.closure.call(this);
         }
 
-        static _checkTarget(target) {
-            /*
-                Checking if there is an already defined for this target context
-                menu.
-            */
-            let alreadyDefined = this._instances.find((instance) => {
-                return instance._target === target;
-            });
-
-            /*
-                Warn and return a found one if any.
-            */
-            if (alreadyDefined) {
-                return alreadyDefined;
-            }
-        }
-
         static get _defaultOptions() {
             return {
                 name: "",
                 disabled: false,
-                defaultOnAlt: true,
+                nativeOnAlt: true,
                 closeOnKey: false,
                 noRecreate: true,
                 transfer: "y",
@@ -753,12 +729,6 @@ const ContextMenu = function() {
             };
         }
     }
-
-    /*
-        The static property that holds all the instances of the ContextMenu to
-        prevent recreating.
-    */
-    ContextMenu._instances = [];
 
     ContextMenu.Item = class Item {
         constructor(descr, contextMenu) {
