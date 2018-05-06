@@ -227,10 +227,18 @@ const ContextMenu = function() {
             this._setAndAdjustPosition();
 
             /*
-                Mark the overlay and the context menu as visible in the right
-                position.
+                Here we can finally mark the CM and the overlay as visible by
+                respectively setting their class attributes. Notice, that the
+                CM has in fact always been visible (as well as the overlay).
+                The thing is that all the computations happen so fast, that a
+                user simply isn't able to notice the CM movement from the top
+                left corner to its correct (determined) position. This `visible`
+                class serves simply as a mark that gives the user an ability to
+                animate the appearance of the CM (for example using the CSS
+                `opacity` property and transitions).
             */
-            this._markAsVisible();
+            this._overlay.className = "visible";
+            this._cm.className = "visible";
 
             /*
                 Execute the opening callback.
@@ -601,21 +609,6 @@ const ContextMenu = function() {
                 */
                 this._cm.style.top = `${this._position.y}px`;
             }
-        }
-
-        _markAsVisible() {
-            /*
-                Here we can finally mark the CM as visible by respectively
-                setting it's class attribute. Notice, that the CM has actually
-                always been visible. The thing is that all the calculations
-                happen so fast, that a user simply isn't able to notice the CM
-                movement from the top left corner to the right position. This
-                `visible` mark is necessary to give the user an ability to
-                animate the appearance of the CM (for example using the CSS
-                `opacity` property).
-            */
-            this._overlay.className = "visible";
-            this._cm.className = "visible";
         }
 
         close() {
