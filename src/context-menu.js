@@ -198,8 +198,8 @@ const ContextMenu = function() {
             this._buildItemElements();
 
             /*
-                Render the invisible context menu in the top left corner of the
-                page.
+                Render the CM in the top left corner of the page (because its
+                position is undetermined yet).
             */
             this._render();
 
@@ -291,14 +291,14 @@ const ContextMenu = function() {
         _render() {
             /*
                 Create a `div` element with `data-cm` attribute the value of
-                which equals the `name` of the CM (for styling purposes also).
+                which equals the `name` of the CM (for styling purposes).
             */
             this._cm = document.createElement("div");
             this._cm.dataset.cm = this.options.name;
 
             /*
                 Set the necessary styles that are absolutely must be. These
-                styles make the CM what it is.
+                styles make the CM to be what it is.
             */
             this._cm.style.cssText = "position: absolute !important;\
                                       display: block !important;\
@@ -312,20 +312,20 @@ const ContextMenu = function() {
             let list = document.createElement("ol");
 
             /*
-                Populate the list with items.
+                Populate the list with items (keeping the order in which they
+                are defined).
             */
             this._itemElements.forEach((item) => {
                 list.appendChild(item);
             });
 
             /*
-                Insert the list inside the context menu (inside the `div`
-                element).
+                Insert the list into the `div[data-cm]` element.
             */
             this._cm.appendChild(list);
 
             /*
-                Insert the context menu inside the overlay.
+                Insert the prepared CM into the overlay.
             */
             this._overlay.appendChild(this._cm);
         }
