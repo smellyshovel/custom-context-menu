@@ -665,7 +665,7 @@ const ContextMenu = function() {
                 duration is more than 0 for sure. Such way we determine whether
                 the transition is applied to the element.
             */
-            if (cmTransDur > 0 || overlayTransDur > 0) {
+            if (this.options.noRecreate && (cmTransDur > 0 || overlayTransDur > 0)) {
 
                 /*
                     If the overlay becomes "invisible" faster than the CM then
