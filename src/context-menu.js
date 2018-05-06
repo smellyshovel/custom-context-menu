@@ -530,12 +530,12 @@ const ContextMenu = function() {
                 /*
                     For shortness later on. Familiar approach of getting the
                     viewport's height. `cmBottom` holds the coordinate of the
-                    bottom edge of the CM. `verticalMargin` is basically just an
-                    alias.
+                    bottom edge of the CM. `verticalSpacing` is basically just
+                    an alias.
                 */
                 let viewportHeight = this._overlay.getBoundingClientRect().height,
                     cmBottom = this._cm.getBoundingClientRect().bottom,
-                    verticalMargin = this.options.verticalMargin;
+                    verticalSpacing = this.options.verticalSpacing;
 
                 /*
                     ...and if the CM doesn't fit the height of the viewport
@@ -549,12 +549,12 @@ const ContextMenu = function() {
                 */
                 if (cmBottom > viewportHeight) {
                     /*
-                        Set the `y` position including the `verticalMargin` and
+                        Set the `y` position including the `verticalSpacing` and
                         restrict the height of the CM (also including the
-                        `verticalMargin`).
+                        `verticalSpacing`).
                     */
-                    this._cm.style.top = `${verticalMargin}px`;
-                    this._cm.style.maxHeight = `${viewportHeight - verticalMargin * 2}px`;
+                    this._cm.style.top = `${verticalSpacing}px`;
+                    this._cm.style.maxHeight = `${viewportHeight - verticalSpacing * 2}px`;
 
                     /*
                         Prepare the "up" and "down" arrows.
@@ -717,7 +717,7 @@ const ContextMenu = function() {
                 nativeOnAlt: true,
                 penetrable: false,
                 transfer: "y",
-                verticalMargin: 10,
+                verticalSpacing: 10,
                 callback: {
                     opening() {},
                     closure() {}
