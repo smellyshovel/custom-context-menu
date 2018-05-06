@@ -737,8 +737,8 @@ const ContextMenu = function() {
             this._cm = contextMenu;
 
             /*
-                Actually build the DOM node relying on the provided description
-                (the object that describes the item).
+                Actually build a DOM node relying on the provided description
+                (the object or the string that describes the item).
             */
             this._buildNode();
 
@@ -751,8 +751,8 @@ const ContextMenu = function() {
         _buildNode() {
             /*
                 The description may take one of two forms: an object and a
-                string. Using object a user defines custom items, and using
-                string he defines "special" items like "separator". Therefore
+                string. Using objects a user defines custom items, and using
+                strings he defines "special" items like "separator". Therefore
                 there're 2 deffirent ways of building the item.
             */
             if (typeof this._descr === "object") {
@@ -765,21 +765,22 @@ const ContextMenu = function() {
         _buildFromObject() {
             /*
                 If an object is provided as the description of the item, then we
-                must create a `li` element with the text provided by the `title`
-                property of the description object, add empty `data-cm-item`
-                attribute to it and register the event listener responsible for
-                tracking the action call. `tabIndex` attribute gives us a
-                possibility to focus on the item (which is used basically for
-                every tyoe of interaction with the item).
+                have to create a `li` element with the text provided by the
+                `title` property of the description object, ad a `data-cm-item`
+                attribute with the value of `title` to it and register the event
+                listener responsible for tracking the action call. `tabIndex`
+                attribute gives us a possibility to focus on the item (which is
+                used basically for every tyoe of interaction with the item,
+                whether using a mouse or a keyboard).
             */
-            let text = document.createTextNode(this._descr.title);
             this._node = document.createElement("li");
+            this._node.dataset.cmItem = this._descr.title;
             this._node.tabIndex = 0;
 
+            let text = document.createTextNode(this._descr.title);
             this._node.appendChild(text);
-            this._node.dataset.cmItem = this._descr.title;
 
-            this._registerActionEventListener();
+            this._regActionEL();
         }
 
         _buildFromString() {
@@ -788,22 +789,21 @@ const ContextMenu = function() {
                 this item must be trated as a special one. The (extensible) list
                 of all the available special items is stored in the
                 ::_specialItems static property. The elements that represent
-                certain special items are also stored in there. Special items
-                don't have actions attached to them so there's no need to add
-                appropriate event listener (as it is in case of building the
+                certain specials are also stored in there. Special items can't
+                have actions attached to them so there's no need to add\
+                appropriate event listener (as it is in the case of building the
                 item from an object).
             */
             let type = ContextMenu.Item._specialItems[this._descr];
             this._node = document.createElement(type);
-
             this._node.dataset.cmItemSpecial = this._descr;
         }
 
-        _registerActionEventListener() {
+        _regActionEL() {
             /*
-                Listen to `mouseup` (whether left of right button) and trigger
-                the action attached to the item. Threshold in 200ms is necessary
-                to avoid "falsy" action triggering. 200 is just an approximate
+                Listen to `mouseup` (either left or right button) and call the
+                action attached to the item. Threshold in 200ms is necessary to
+                avoid "falsy" action triggering. 200 is just an approximate
                 value. More research is needed to establish the value more
                 accurately.
             */
@@ -828,10 +828,10 @@ const ContextMenu = function() {
                 We must also register some other event listeners that are
                 responsible for correct CM closure handling.
             */
-            this._registerBehaviorEventListener();
+            this._regBehaviorEL();
         }
 
-        _registerBehaviorEventListener() {
+        _regBehaviorEL() {
             /*
                 `action` triggers on `mouseup` event. But the `mousedown` and
                 `contextmenu` events happen before the `mouseup`. It means that

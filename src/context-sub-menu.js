@@ -54,7 +54,7 @@ void function() {
                 instance of `ContextMenu.Sub` (but it's still an object,
                 remember?) then it must be treated as usual.
             */
-            this._registerActionEventListener(this._descr.action);
+            this._regActionEL(this._descr.action);
         }
     };
 
@@ -118,7 +118,7 @@ void function() {
             CM closure on `mousedown` and `contextmenu` events (i.e. on left &
             right clicks on the caller).
         */
-        this._registerBehaviorEventListener();
+        this._regBehaviorEL();
     };
 
     ContextMenu.Sub = class Sub {
