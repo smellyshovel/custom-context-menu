@@ -87,64 +87,81 @@ const ContextMenu = function() {
         }
 
         _regClosureEL() {
-            // noRecreate -> impenetrable. Currently doesn't work. Why?
-            /*
-                We need 2 sets of different event listeners to track the context
-                menu closure. The first one is used if the "noRecreate" option
-                is `true` and the second one if `false`.
-            */
-            if (this.options.noRecreate) {
+            if (this.options.penetrable) {
                 /*
-                    If a click happened on the overlay and the click is not the
-                    rightclick, then close the context menu. If the click is the
-                    rightclick, then it will be handled by the appropriate event
-                    listener defined below this if-else block.
+                    If the overlay of the CM is `penetrable` for right-clicking
+                    through it (so a new CM might be immediately opened) then,
+                    because the "mousedown" event is triggered before the
+                    "contextmenu", we must first close the CM on any kind of
+                    click, so when the "contextmenu" event will be triggered, it
+                    will be triggered not on the overlay (therefore ignored as
+                    you'll see later), but on some DOM element, causing the
+                    opening of the new CM.
+                */
+                this._overlay.addEventListener("mousedown", (event) => {
+                    this.close();
+                });
+            } else {
+                /*
+                    But if the overlay is impenetrable, then we close the CM on
+                    any king of click (except for right click), therefore
+                    enforcing the rightclick to be handled via the other
+                    (the beneath one) event listener.
                 */
                 this._overlay.addEventListener("mousedown", (event) => {
                     if (event.which !== 3) {
                         this.close();
                     }
                 });
-            } else {
-                /*
-                    Close the context menu on any click (whether right of left)
-                    on the overlay. `contextmenu` event listener takes place
-                    after the `mousedown`, so a new context menu will be opened
-                    after the closure. This is the main idea lying under the
-                    `noRecreate` option.
-                */
-                this._overlay.addEventListener("mousedown", (event) => {
-                    this.close();
-                });
             }
 
             /*
-                But it's also necessary to close the context menu if the click
-                happened not on the overlay, but over the context menu itself.
-                The next 2 event listeners are necessary in order just to close
-                the context menu in such case and NOT to recreate it (yeah, even
-                if the `noRecreate` option is `false`).
+                This event might only be triggered if the overlay is
+                impenetrable and if it has been right-clicked. The CM is not yet
+                closed, so we have to do it here preventing the native CM from
+                appearing and stopping event's propagation by the way. Stopping
+                the event's propagation is necessary because if we don't do so
+                then a CM attached to the overlay will appear (and as you know
+                there might be no CM attached to the overlay, so the event will
+                bubble up the DOM and will most probably trigger the `document`s
+                CM opening (if there's a CM attached to `document` or
+                `document.documentElement`)). The reason why don't we put these
+                event listener registration directly into the `else` block is
+                because the "contextmenu" event is also fired whenever the
+                "menu" key is pressed (the one that you've probably never
+                touched since buying your keyboard). So disabling the CM closure
+                on this key press must happen for both types of CMs (whether
+                its overlay is penetrable or not).
+            */
+            this._overlay.addEventListener("contextmenu", (event) => {
+                event.stopPropagation();
+                event.preventDefault();
 
-                This part has earlier been in the `else` block. But it became
-                obvious that we have to close the context menu on the right
-                click over the cm, but not to close it on the left click,
-                because there's a need to be able to interact with a scrollbar
-                using a mouse cursor (but not only a wheel).
+                if (event.which !== 0) {
+                    this.close();
+                }
+            });
+
+            /*
+                If the click happened not on the overlay but on the CM itself
+                then it will bubble up to the overlay which will lead to the CM
+                closure, so we have to cancel the bubbling. It's a bad idea to
+                let the CM to be closed in such case because it would become
+                impossible to interact with a scrollbar (that appears if the CM
+                is overflowed) using a mouse.
             */
             this._cm.addEventListener("mousedown", (event) => {
                 event.stopPropagation();
-
-                /*
-                    Uncomment the part below to enable the context menu closure
-                    on the left button click on the context menu, but be aware
-                    of thereby disabling interaction with the scrollbar with a
-                    mouse cursor.
-                */
-                // if (event.which !== 3) {
-                //     // this.close();
-                // }
             });
 
+            /*
+                But it's rather a good idea to close the CM if it has been
+                right-clicked. This might also be useful for mobile devises.
+                Stopping the propagation is necessary to avoid the #close method
+                double invocation (otherwise this event will invoke the #close,
+                and then the event will bubble to the overlay which will also
+                lead to the #close invocation).
+            */
             this._cm.addEventListener("contextmenu", (event) => {
                 event.preventDefault();
                 event.stopPropagation();
@@ -152,41 +169,20 @@ const ContextMenu = function() {
             });
 
             /*
-                Here we listen to the rightclick anywhere "above" the overlay.
-                This event listener is also responsible for hitting the menu
-                key, so we check the `closeOnKey` option's state as well.
+                The event listener responsible for tracking the CM closure on
+                the "escape" key press. We save the callback as a `this`
+                instance's property for 2 reasons: first of all it must be
+                removed after the CM will become closed (check the #close method
+                for explanations of why) and secondly because it's necessary for
+                sub-menues proper closing.
             */
-            this._overlay.addEventListener("contextmenu", (event) => {
-                event.stopPropagation();
-                event.preventDefault();
-
-                if (!this.options.closeOnKey ? event.which !== 0 : true) {
-                    this.close();
-                }
-            });
-
-            /*
-                The event listener responsible for the CM closure on the
-                "escape" key press. We only need it to respond once for 2
-                reasons: to prevent document event listeners list polluting and
-                to avoid fake event triggering after the CM has been closed. It
-                means that we must remove it later (in the #close to be exact),
-                but to do so we have to save the callback as the property of the
-                instance. Using `{once: true}` as the third option is not
-                suitable because a user may press some other keys during the
-                time the CM is opened, which means that this event will be fired
-                and removed even if the user pressed not the "escape" key. And
-                this means that he won't be able anymore to close the CM by
-                pressing the "escape" key. So we have to remove the event
-                listener manually in the #close method.
-            */
-            this._keyClosureListenerCallback = (event) => {
+            this._keyClosureLC = (event) => {
                 if (event.keyCode === 27) {
                     this.close();
                 }
             };
 
-            document.addEventListener("keydown", this._keyClosureListenerCallback);
+            document.addEventListener("keydown", this._keyClosureLC);
         }
 
         _open(event) {
@@ -638,7 +634,7 @@ const ContextMenu = function() {
             /*
                 Remove the "escape" key press event listener.
             */
-            document.removeEventListener("keydown", this._keyClosureListenerCallback);
+            document.removeEventListener("keydown", this._keyClosureLC);
 
             /*
                 Remove the keyboard navigation event listener.
@@ -665,7 +661,7 @@ const ContextMenu = function() {
                 duration is more than 0 for sure. Such way we determine whether
                 the transition is applied to the element.
             */
-            if (this.options.noRecreate && (cmTransDur > 0 || overlayTransDur > 0)) {
+            if (!this.options.penetrable && (cmTransDur > 0 || overlayTransDur > 0)) {
 
                 /*
                     If the overlay becomes "invisible" faster than the CM then
@@ -718,8 +714,7 @@ const ContextMenu = function() {
                 name: "",
                 disabled: false,
                 nativeOnAlt: true,
-                closeOnKey: false,
-                noRecreate: true,
+                penetrable: false,
                 transfer: "y",
                 verticalMargin: 10,
                 callback: {
