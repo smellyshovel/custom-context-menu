@@ -205,7 +205,9 @@ const ContextMenu = function() {
 
             /*
                 Add event listeners that are responsible for hightlighting
-                (which happens by focusing on) an item.
+                (which happens by focusing on) items. Split the keyboard
+                navigation apart from the mouse navigation due to keep things
+                simple with CSMs.
             */
             this._regKbNavEL();
             this._regMouseNavEL();
@@ -337,7 +339,8 @@ const ContextMenu = function() {
                 initial state "-1" is used as a starting point, like a note that
                 indicates that we should start from the very first/last item
                 (depending on what arrow key is pressed), but not to continue
-                incrementing/decrementing this value when a key is pressed.
+                incrementing/decrementing this value when a key is pressed. "-1"
+                also indicates that none of the items is currently selected.
             */
             this._focusedItemIndex = -1;
 
@@ -347,26 +350,27 @@ const ContextMenu = function() {
                 method, but it's defined here for sakes of consistency. It is
                 basically just a regular method that can be (and is) shared with
                 other classes that might want to use it. Pay attention that it's
-                not an arrow function. It's very important.
+                not an arrow function. It's very important. "AC" stands for
+                "actual callback".
             */
-            this._kbNavigationActualCallback = function(event) {
+            this._kbNavigationAC = function(event) {
                 /*
-                    Each time the arrow up or arrow down key is pressed we
+                    Each time the "arrow up" or "arrow down" key is pressed we
                     determine the item to be focused (or rather it's index) and
-                    actually focusing on the relevant item. Preventing defaul
+                    actually focusing on the relevant item. Preventing default
                     behavior is necessary to avoid scrolling of an overflowed
                     context menu. The possibility to focus on an element (item)
-                    that is not focusable (sort of) is provided to us thanks to
-                    giving the item the `tab-index` attribute during its
+                    that is not focusable (by default) is provided to us thanks
+                    to giving the item the `tab-index` attribute during its
                     creation.
                 */
-                if (event.keyCode === 40) {
+                if (event.keyCode === 40) { // "arrow down"
                     event.preventDefault();
                     this._focusedItemIndex += this._focusedItemIndex > this._normalItems.length - 2 ? -this._normalItems.length + 1 : 1;
                     this._normalItems[this._focusedItemIndex].focus();
                 }
 
-                if (event.keyCode === 38) {
+                if (event.keyCode === 38) { // "arrow up"
                     event.preventDefault();
                     this._focusedItemIndex = this._focusedItemIndex < 1 ? this._normalItems.length - 1 : this._focusedItemIndex - 1;
                     this._normalItems[this._focusedItemIndex].focus();
@@ -386,20 +390,20 @@ const ContextMenu = function() {
             /*
                 3 additional lines of code here allow us to save more than 10
                 times more of the CSM code. This keyboard navigation listener's
-                callback is saved (is not an anonymous arrow function) for 2
-                reasons: first of all to be able to remove it later during the
-                CM closure process, and the second is to be able to remove it
-                after a CSM opening. Why it is necessary you can find more about
-                in the CSM's source.
+                callback is saved (is not an anonymous arrow callback function)
+                for 2 reasons: first of all is to be able to remove it later
+                during the CM closing process, and the second is to be able to
+                remove it after a CSM opening. Why it is necessary you can find
+                more about in the CSM's source.
             */
-            this._kbNavigationListenerCallback = (event) => {
-                this._kbNavigationActualCallback.call(this, event);
+            this._kbNavigationLC = (event) => {
+                this._kbNavigationAC.call(this, event);
             }
 
             /*
                 Register the event listener itself.
             */
-            document.addEventListener("keydown", this._kbNavigationListenerCallback);
+            document.addEventListener("keydown", this._kbNavigationLC);
         }
 
         _regMouseNavEL() {
@@ -639,7 +643,7 @@ const ContextMenu = function() {
             /*
                 Remove the keyboard navigation event listener.
             */
-            document.removeEventListener("keydown", this._kbNavigationListenerCallback);
+            document.removeEventListener("keydown", this._kbNavigationLC);
 
             /*
                 Remove "visible" class from the CM and the overlay. First of all
