@@ -235,17 +235,17 @@ const ContextMenu = function() {
 
         _renderOverlay() {
             /*
-                Disable page scrolling via setting the `overflow` CSS property
-                to `hidden`. This denies page scrolling (in any form, whether
-                the obvious mouse wheel scrolling or a `page down`, `arrow up`,
-                and so on).
+                Disable page scrolling via setting the <html> element's
+                `overflow` CSS property to `hidden`. This denies page scrolling
+                (in any form, whether the obvious mouse wheel scrolling or a
+                `page down`, `arrow up` key presses, and so on). It's not
+                necessary, but is rather probably desirable.
             */
             document.documentElement.style.overflow = "hidden";
 
             /*
                 Create a div element with `data-cm-overlay` attribute the value
-                of which equals the `name` of the context menu (for styling
-                purposes).
+                of which equals the `name` of the CM (for styling purposes).
             */
             this._overlay = document.createElement("div");
             this._overlay.dataset.cmOverlay = this.options.name;
@@ -266,7 +266,7 @@ const ContextMenu = function() {
 
             /*
                 Insert the overlay to the end of the body (after all the other
-                elements currently presenting in the body).
+                elements currently presenting there).
             */
             document.body.appendChild(this._overlay);
         }
