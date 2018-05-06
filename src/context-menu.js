@@ -413,16 +413,17 @@ const ContextMenu = function() {
                 (one of normal, i.e. excluding the special ones) it gets
                 focused and the ._focusedItemIndex variable's value from this
                 point holds the index of the focused item. That means that if
-                the user than stops his mouse and starts navigating using a
+                the user then stops his mouse and starts navigating using a
                 keyboard, then the next highlighted item is gonna be the one
                 that is after/before (depending on which key was pressed) the
                 one that's currently being focused (with mouse). But if the user
                 moved a mouse out of any item (for example hovering a special
-                item), then the prviously focused item gets blurred and if he'll
-                press a key up or key down the first/last item will become
-                focused. I decided to listen for mouse movement on the overlay
-                so there'll be more chances that moving the mouse out of an item
-                will lead to blurring, than it was with the ._cm as a
+                item), then the previously focused item gets blurred and if
+                he'll press a "key up" or "key down" the first/last item will
+                become focused (instead of the next/previous one). I decided to
+                listen for mouse movement on the overlay (but not on the CM) so
+                there'll be more chances that moving the mouse out of an item
+                will lead to blurring, than it was with the ._cm as an
                 `addEventListener`s target. However, such approach affects
                 perfomance (not so much that it can be noticed though).
             */
