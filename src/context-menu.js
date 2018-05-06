@@ -221,10 +221,10 @@ const ContextMenu = function() {
             this._determinePosition(event);
 
             /*
-                Set the correct context menu position (determined earlier with,
-                probably, some additions in rare cases).
+                Set the correct CM position (the determined earlier one) and
+                adjust it if necessary.
             */
-            this._setPosition();
+            this._setAndAdjustPosition();
 
             /*
                 Mark the overlay and the context menu as visible in the right
@@ -506,35 +506,33 @@ const ContextMenu = function() {
             }
         }
 
-        _setPosition() {
+        _setAndAdjustPosition() {
             /*
-                Setting the `x` coordinate. We have nothing to do with it, so
-                it's OK just to set it as it is (because it has been previously
+                Setg the `x` coordinate. We have nothing to do with it, so it's
+                OK just to set it as it is (because it has been previously
                 determined).
             */
             this._cm.style.left = `${this._position.x}px`;
 
             /*
-                For shortness later on. Familiar approach of getting the
-                viewport height. `cmBottom` holds the coordinate of the bottom
-                edge of the CM. `verticalMargin` is basically just an alias.
-            */
-            let viewportHeight = this._overlay.getBoundingClientRect().height,
-                cmBottom = this._cm.getBoundingClientRect().bottom,
-                verticalMargin = this.options.verticalMargin;
-
-            /*
                 If the `y` coordinate is above the top screen side (because the
-                context menu has too many items and/or it has been transfered)
-                then force the menu to be rendered in screen bounds, i.e make
-                it's top edge's coordinate to be below the top screen (viewport)
-                side for the `verticalMargin` amount of pixels.
+                CM has too many items and/or it has been transfered)...
             */
             if (this._position.y < 0) {
                 /*
-                    If the context menu now doesn't fit the height of the
-                    viewport (that is almost always the case, becase we
-                    previosly transfered the menu due to that reason), then we
+                    For shortness later on. Familiar approach of getting the
+                    viewport's height. `cmBottom` holds the coordinate of the
+                    bottom edge of the CM. `verticalMargin` is basically just an
+                    alias.
+                */
+                let viewportHeight = this._overlay.getBoundingClientRect().height,
+                    cmBottom = this._cm.getBoundingClientRect().bottom,
+                    verticalMargin = this.options.verticalMargin;
+
+                /*
+                    ...and if the CM doesn't fit the height of the viewport
+                    (that is always the case, becase we've previosly transfered
+                    it due to that reason or the CM has too many items), then we
                     shrink it, add arrows and enable a scrollbar (for now, may
                     be the scrollbar will be replaced with some other sort of
                     interaction (scrolling) in the future). This `if` condition
@@ -543,22 +541,19 @@ const ContextMenu = function() {
                 */
                 if (cmBottom > viewportHeight) {
                     /*
-                        Setting the `y` position including the `verticalMargin`
-                        and restricting the height of the context menu (also
-                        including the `verticalMargin`).
+                        Set the `y` position including the `verticalMargin` and
+                        restrict the height of the CM (also including the
+                        `verticalMargin`).
                     */
                     this._cm.style.top = `${verticalMargin}px`;
                     this._cm.style.maxHeight = `${viewportHeight - verticalMargin * 2}px`;
 
                     /*
                         Prepare the "up" and "down" arrows.
-                        `data-cm-item="arrow"` attribute may also be treated as
-                        "special", but we don't add it to the list of allowed
+                        `data-cm-item-special="arrow"` attribute may be treated
+                        as "special", but we don't add it to the list of allowed
                         specials because we don't want a user to use arrows
-                        anywhere else (among items for example). We also use the
-                        same identidier for both "up" and "down" because they
-                        will probably be styled the identical. It's still
-                        possible to overcome this restriction though.
+                        anywhere else (among items for example).
                     */
                     let arrowUp = document.createElement("div");
                     arrowUp.dataset.cmItemSpecial = "arrow up";
@@ -568,21 +563,21 @@ const ContextMenu = function() {
 
                     /*
                         Insert the arrows as the first and the last elements of
-                        the context menu (around the actual menu that is the
-                        `ol` element).
+                        the CM (around the actual menu that is the `ol`
+                        element).
                     */
                     this._cm.insertBefore(arrowUp, this._cm.firstChild);
                     this._cm.appendChild(arrowDown);
 
                     /*
                         Now the the actual menu (`ol` element) is the second
-                        element in the context menu (`div` element). Getting
-                        the height of the `div` element and the height of the
-                        two arrows for further calculations. Remember that the
-                        arrows may still be styled independently one from
-                        another, i.e. they may have different heights, so it's
-                        good practice not to just multiply the height of the
-                        first one by 2, but to encounter heights of the both.
+                        child of the CM (`div` element). Get the height of the
+                        `div` element and the height of the two arrows for
+                        further calculations. Remember that the arrows may be
+                        styled independently one from another, i.e. they may
+                        have different heights, so it's a good practice not to
+                        just multiply the height of the first (or last) one by
+                        2, but to encounter heights of the both.
                     */
                     let menu = this._cm.children[1],
                         cmHeight = this._cm.getBoundingClientRect().height,
@@ -590,21 +585,21 @@ const ContextMenu = function() {
                         arrowDownHeight = arrowDown.getBoundingClientRect().height;
 
                     /*
-                        Restricting the actual menu's height to be the height
-                        of the `div` element minus the height of the 2 arrows
-                        and enabling a scrollbar to have access to all of the
-                        items via scrolling.
+                        Limit the actual menu's height to be the height of the
+                        `div` element minus the height of the 2 arrows and
+                        enable a scrollbar to be able to reach any item via
+                        scrolling.
                     */
                     menu.style.maxHeight = `${cmHeight - arrowUpHeight - arrowDownHeight}px`;
                     menu.style.overflow = "auto";
                 }
             } else {
                 /*
-                    If the context menu fits on the page well, then just
-                    explicitly set it's position to the earlier determined
-                    without any tweaking.
+                    If the CM fits on the page well, then just explicitly set
+                    it's position to the earlier determined without any
+                    adjustments.
                 */
-                this._cm.style.top = this._position.y + "px";
+                this._cm.style.top = `${this._position.y}px`;
             }
         }
 
