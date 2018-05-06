@@ -21,8 +21,8 @@ const ContextMenu = function() {
             /*
                 Make `items` and `options` to be the properties of the instance
                 in order to have an access to them in methods and outside. This
-                also provides a possibility to dinamically add new items and change
-                options.
+                also provides a possibility to dinamically add new items and
+                change options.
             */
             this.items = items;
             this.options = options;
