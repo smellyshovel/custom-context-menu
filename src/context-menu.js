@@ -213,7 +213,10 @@ const ContextMenu = function() {
             this._regMouseNavEL();
 
             /*
-                Determine where on the page the context menu must appear.
+                Now it's a good time to determine where on the page a user will
+                actually see the CM. We couldn't do it earlier because the
+                determination is based on the CM's actual dimensions, so we had
+                to render it first (albeit at a wrong position).
             */
             this._determinePosition(event);
 
@@ -460,9 +463,9 @@ const ContextMenu = function() {
                 viewportHeight = this._overlay.getBoundingClientRect().height,
 
                 /*
-                    The width and height of the yet invisible context menu. By
-                    the way, this is the reason of why it was necessary to
-                    render the CM before (even though invisible).
+                    The width and the height of the CM. By the way, this is the
+                    reason of why it is necessary to render the CM first and
+                    only then determine its position.
                 */
                 cmWidth = this._cm.getBoundingClientRect().width,
                 cmHeight = this._cm.getBoundingClientRect().height,
@@ -480,11 +483,11 @@ const ContextMenu = function() {
                 this._position = {x: clickedX, y: clickedY};
 
             /*
-                But if it's obvious that the context menu won't fit on the page,
-                than transfer it if necessary, or simply force it to fit by
-                setting it's position so the context menu will be rendered right
-                in the corner (the case of the `transfer` option set to
-                `false`).
+                But if it's obvious that the CM won't fit on the page, then
+                either transfer it or simply force it to fit (depending on the
+                "transfer" option's state) by setting its position so the CM
+                will be rendered right in the corner (the case of the `transfer`
+                option set to `false`) of the page.
             */
             if (furthestX > viewportWidth) {
                 if (this.options.transfer === "both" || this.options.transfer === "x") {
