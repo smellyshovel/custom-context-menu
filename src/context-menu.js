@@ -99,7 +99,12 @@ const ContextMenu = function() {
                     opening of the new CM.
                 */
                 this._overlay.addEventListener("mousedown", (event) => {
-                    this.close();
+                    /*
+                        It's necessary to skip closing CSS transitions if the
+                        CM's iverlay is penetrable and the overlay has been
+                        right-clicked.
+                    */
+                    this.close(event.which === 3);
                 });
             } else {
                 /*
@@ -619,7 +624,7 @@ const ContextMenu = function() {
             }
         }
 
-        close() {
+        close(penetrableRightClicked) {
             /*
                 Removing the overlay (which is the core of this method) may seem
                 enough to close all the nested CSMs, but if we want the closing
@@ -668,7 +673,7 @@ const ContextMenu = function() {
                 duration is more than 0 for sure. Such way we determine whether
                 the transition is applied to the element.
             */
-            if (!this.options.penetrable && (cmTransDur > 0 || overlayTransDur > 0)) {
+            if (!penetrableRightClicked && (cmTransDur > 0 || overlayTransDur > 0)) {
                 /*
                     If the overlay becomes "invisible" faster than the CM then
                     there's no need to remove the CM first. It's enough just to
