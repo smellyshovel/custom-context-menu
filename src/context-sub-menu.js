@@ -134,7 +134,11 @@ void function() {
                 Thus if an option's value is `undefined` it will be taken from
                 from the prototype.
             */
-            Object.setPrototypeOf(options, ContextMenu.Sub._defaultOptions);
+            if (typeof options === "object") {
+                Object.setPrototypeOf(options, ContextMenu._defaultOptions);
+            } else {
+                options = ContextMenu._defaultOptions;
+            }
 
             /*
                 Make `items` and `options` to be the properties of the instance
