@@ -12,10 +12,10 @@ dependencies. Less than 3kB both files (gzipped and minified)._
         * [Options](#options)
     1. [Fallback menu](#fallback-menu)
 1. [Sub-menus](#sub-menus)
-1. [The things you might wish you knew before](#tips)
+1. [Some things you might wish you knew earlier](#some-things-you-might-wish-you-knew-earlier)
 1. [Examples](#examples)
-    1. [Without sub-menus](#example-without-sub-menus)
-    2. [With 2-levels-nested sub-menu](#example-with-2-levels-nested-sub-menu)
+    1. [Without sub-menus](#without-sub-menus)
+    2. [With 2-levels-nested sub-menu](#with-2-levels-nested-sub-menu)
 1. [Styling](#styling)
 1. [Documentation](#documentation)
 1. [Contribution](#contribution)
@@ -377,6 +377,8 @@ An example of a Context Menu, the second item of which opens a sub-menu, the fir
 ```
 
 ## [Styling](#styling)
+
+To be filled later...
 
 ## [Documentation](#documentation)
 
