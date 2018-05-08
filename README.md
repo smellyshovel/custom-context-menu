@@ -5,7 +5,18 @@ dependencies. Less than 3kB both files (gzipped and minified)._
 ## Contents
 1. [Installation](#installation)
 1. [Usage](#usage)
-    * [Nested Context Menues](#nested-context-menues)
+    1. [Link the script](#link-the-script)
+    1. [Define a new Context Menu](#define-a-new-context-menu)
+        * [Target](#target)
+        * [Items](#items)
+        * [Options](#options)
+    1. [Fallback menu](#fallback-menu)
+1. [Sub-menus](#sub-menus)
+1. [The things you might wish you knew before](#tips)
+1. [Examples](#examples)
+    1. [Without sub-menus](#example-without-sub-menus)
+    2. [With 2-levels-nested sub-menu](#example-with-2-levels-nested-sub-menu)
+1. [Styling](#styling)
 1. [Documentation](#documentation)
 1. [Contribution](#contribution)
 
@@ -27,7 +38,7 @@ dependencies. Less than 3kB both files (gzipped and minified)._
 
 ## [Usage](#usage)
 
-### 1. Link the script
+### 1. [Link the script](#link-the-script)
 
 Link the `src/context-menu.js` or both the `src/context-menu.js` and `src/context-sub-menu.js` if you do also wish to use sub-menus
 
@@ -44,7 +55,7 @@ or
 
 Notice also that if you are about to use sub-menus then you **must** include the `context-menu.js` **before** the `context-sub-menu.js`.
 
-### 2. Define a new Context Menu
+### 2. [Define a new Context Menu](#define-a-new-context-menu)
 
 The defenition of a new Context Menu is rather simple. All you have to do is to invoke the `ContextMenu` constructor providing it with 3 arguments: a `target`, an array of `items` and, optionally, an object of `options`
 
@@ -52,7 +63,7 @@ The defenition of a new Context Menu is rather simple. All you have to do is to 
 new ContextMenu(target, items, options);
 ```
 
-#### Target
+#### [Target](#target)
 
 The target is a DOM element interaction with which leads to opening of the Context Menu. Or it can also be a collection of elements. All the following examples are valid
 
@@ -76,7 +87,7 @@ let target = document;
 
 More on the fallback menu in the [appropriate section](#).
 
-#### Items
+#### [Items](#items)
 
 The `items` array is used to define all the items of the Context Menu. Each item is either an object or a string
 
@@ -146,7 +157,7 @@ let items = [
 
 All the special items are predefined. There's currently only one special item - the `separator`, though the list is extensible and will probably become expanded in the future.
 
-#### Options
+#### [Options](#options)
 
 The `options` object provides the options which define the behavior of the Context Menu. This argument is optional, i.e. you might either provide it or not.
 
@@ -188,7 +199,7 @@ The option the value of which must be an iteger represents the amount of pixels 
 ##### `callback`
 The object with 2 properties: `opening` and `closure`, each of which is a function. The function is invoked whenever the menu is opened or closed respectively.
 
-### Fallback menu
+### [Fallback menu](#fallback-menu)
 
 You may define Custom Context Menus for all the `<a>` elements on a page, for all the `<p>` and `<button>` elements. But what about the other stuff? If a user right-clicked not one of these elements, what's then?
 
@@ -208,7 +219,7 @@ then if you right-click any `<a>` element the a-element-menu will appear. But if
 
 You may also reach identical behavior by using the `document.documentElement` instead of `document`. However, such approach might have some disatvantages, such as that if the `<html>` element's (which is represented by the `document.documentElement`) height is less than the height of the viewport then all the "differential" part of the page won't serve as a Context Menu caller.
 
-## Sub-menus
+## [Sub-menus](#sub-menus)
 
 It's quite common to combine similar items into groups and thus sub-menus are your way to go. The sub-menu is a menu within a menu.
 
@@ -249,47 +260,123 @@ Here is the list of all the available for a sub-menu options. As you can see it'
 
 But the `delay` option is available for sub-meus whilst not for normal Context Menus. The option defines how much time should pass before the sub-menu might be opened or closed after the caller has become selected. The time is specified in milliseconds.
 
-## Some things you might wish you knew earlier
+## [Some things you might wish you knew earlier](#tips)
 
-1. Context of an action
+### 1. Context of an action
 
-    An action when invoked gains the context of the Context Menu instance itself
+An action when invoked gains the context of the Context Menu instance itself
 
-    ```javascript
-    let fallbackCM = new ContextMenu(document, [
+```javascript
+let fallbackCM = new ContextMenu(document, [
+    {
+        title: "Luke, I'm your father",
+        action() {
+            console.log(this === fallbackCM); // true
+        }
+    }
+]);
+```
+
+### 2. `items` and `options` are used without making copies of them
+
+The `items` array might change during the lifecycle of the page the Context Menu using the array is used on.
+
+The prototype of the options object will be substituted with the other one.
+
+### 3. Use public properties of a Context Menu to dinamically add (or remove) `items` and change `options`
+
+After a Context Menu is initialized (the constructor is invoked) you can still make changes to the menu's `items` and `options` by modifying the corresponding properties of the instance
+
+```javascript
+    let awesomeCM = new ContextMenu(target, items, options);
+
+    setTimeout(() => {
+        awesomeCM.items.push(newItem);
+        awesomeCM.options.transfer = false;
+    }, 10000);
+```
+
+The example above adds a new item to the `awesomeCM` Context Menu and changes its `transfer` option's property to `false` in 10 seconds after the Context Menu has become initialized.
+
+## [Examples](#examples)
+
+### 1. [Without sub-menus](#example-without-sub-menus)
+
+An example of a regular Context Menu without sub-menus, with prohibited native context menus and which says "bye" after it has become closed.
+
+```javascript
+    let cmForLinks = new ContextMenu(document.querySelectorAll("a"), [
         {
-            title: "Luke, I'm your father",
-            action() {
-                console.log(this === fallbackCM); // true
-            }
+            title: "Option 1",
+            action() {alert("You selected the option #1")}
+        },
+
+        {
+            title: "Option 2",
+            action() {alert("You selected the option #2")}
+        }
+    ], {
+        nativeOnAlt: false,
+        callback: {
+            opening() {},
+            closure() {alert("bye")}
+        }
+    });
+```
+
+### 2. [With 2-levels-nested sub-menu](#example-with-2-levels-nested-sub-menu)
+
+An example of a Context Menu, the second item of which opens a sub-menu, the first item of which opens another one.
+
+```javascript
+    let subMenu1stLevel = new ContextMenu.Sub([
+        {
+            title: "2 > First",
+            action: new ContextMenu.Sub([
+                {
+                    title: "3 > First",
+                    action() {return 2 + 2}
+                },
+
+                {
+                    title: "3 > Second",
+                    action() {return 2 - 2}
+                },
+
+                {
+                    title: "3 > Third",
+                    action() {return 2 * 2}
+                }
+            ]);
+        },
+
+        "separator",
+
+        {
+            title: "2 > Second",
+            action: subMenu1stLevel
         }
     ]);
-    ```
 
-1. `items` and `options` are used without making copies of them
+    let cmForButtons = new ContextMenu(document.querySelectorAll("button"), [
+        {
+            title: "1 > First",
+            action() {return 2 + 2}
+        },
 
-    The `items` array might change during the lifecycle of the page the Context Menu using the array is used on.
+        {
+            title: "1 > Second",
+            action: subMenu1stLevel
+        },
 
-    The prototype of the options object will be substituted with the other one.
+        {
+            title: "1 > Third",
+            action() {return 2 * 2}
+        }
+    ]);
+```
 
-1. Use public properties of a Context Menu to dinamically add (or remove) `items` and change `options`
-
-    After a Context Menu is initialized (the constructor is invoked) you can still make changes to the menu's `items` and `options` by modifying the corresponding properties of the instance
-
-    ```javascript
-        let awesomeCM = new ContextMenu(target, items, options);
-
-        setTimeout(() => {
-            awesomeCM.items.push(newItem);
-            awesomeCM.options.transfer = false;
-        }, 10000);
-    ```
-
-    The example above adds a new item to the `awesomeCM` Context Menu and changes its `transfer` option's property to `false` in 10 seconds after the Context Menu has become initialized.
-
-## Examples
-
-## Styling
+## [Styling](#styling)
 
 ## [Documentation](#documentation)
 
