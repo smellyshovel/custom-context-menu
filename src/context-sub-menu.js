@@ -135,9 +135,9 @@ void function() {
                 from the prototype.
             */
             if (typeof options === "object") {
-                Object.setPrototypeOf(options, ContextMenu._defaultOptions);
+                Object.setPrototypeOf(options, Sub._defaultOptions);
             } else {
-                options = ContextMenu._defaultOptions;
+                options = Sub._defaultOptions;
             }
 
             /*
