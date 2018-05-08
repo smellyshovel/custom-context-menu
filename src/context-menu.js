@@ -446,7 +446,15 @@ const ContextMenu = function() {
                 });
 
                 item.addEventListener("mouseleave", (event) => {
-                    this._focusedItemIndex = -1;
+                    /*
+                        With the following line commented out the bug #4 is
+                        fixed. However, the comment above is no longer true.
+                        I think it's OK to lose such a minor feature (which, in
+                        fact, is just an attempt to implement everything as
+                        closely as possible in compare with the native Chrome's
+                        behavior) to fix such a significant bug.
+                    */
+                    // this._focusedItemIndex = -1;
                     item.blur();
                 });
             });
