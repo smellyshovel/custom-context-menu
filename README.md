@@ -38,7 +38,7 @@ dependencies. Less than 3kB both files (gzipped and minified)._
 
 ## [Usage](#usage)
 
-### 1. [Link the script](#link-the-script)
+### [Link the script](#link-the-script)
 
 Link the `src/context-menu.js` or both the `src/context-menu.js` and `src/context-sub-menu.js` if you do also wish to use sub-menus
 
@@ -50,12 +50,11 @@ or
 
 ```html
 <script src="path/to/package/src/context-menu.js">
-<script src="path/to/package/src/context-sub-menu.js">
 ```
 
 Notice also that if you are about to use sub-menus then you **must** include the `context-menu.js` **before** the `context-sub-menu.js`.
 
-### 2. [Define a new Context Menu](#define-a-new-context-menu)
+### [Define a new Context Menu](#define-a-new-context-menu)
 
 The defenition of a new Context Menu is rather simple. All you have to do is to invoke the `ContextMenu` constructor providing it with 3 arguments: a `target`, an array of `items` and, optionally, an object of `options`
 
@@ -300,7 +299,7 @@ The example above adds a new item to the `awesomeCM` Context Menu and changes it
 
 ## [Examples](#examples)
 
-### 1. [Without sub-menus](#example-without-sub-menus)
+### [Without sub-menus](#example-without-sub-menus)
 
 An example of a regular Context Menu without sub-menus, with prohibited native context menus and which says "bye" after it has become closed.
 
@@ -324,7 +323,7 @@ An example of a regular Context Menu without sub-menus, with prohibited native c
     });
 ```
 
-### 2. [With 2-levels-nested sub-menu](#example-with-2-levels-nested-sub-menu)
+### [With 2-levels-nested sub-menu](#example-with-2-levels-nested-sub-menu)
 
 An example of a Context Menu, the second item of which opens a sub-menu, the first item of which opens another one.
 
