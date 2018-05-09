@@ -83,7 +83,7 @@ The `target` might also be the `document` which is quite useful for defining a f
 let target = document;
 ```
 
-More on the fallback menu in the [appropriate section](#).
+More on the fallback menu in the [appropriate section](#fallback-menu).
 
 #### [Items](#items)
 

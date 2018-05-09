@@ -1,7 +1,7 @@
 {
   "name": "custom-context-menu",
   "version": "2.0.0",
-  "description": "A small (<2kB minified and gzipped) tool with no dependencies that helps you create custom rightclick context menues.",
+  "description": "Improve a web-interface's UX by customizing its context menus",
   "keywords": [
     "context-menu",
     "contextmenu",
