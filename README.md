@@ -17,7 +17,6 @@ dependencies. Less than 3kB both files (gzipped and minified)._
     1. [Without sub-menus](#without-sub-menus)
     2. [With 2-levels-nested sub-menu](#with-2-levels-nested-sub-menu)
 1. [Styling](#styling)
-1. [Documentation](#documentation)
 1. [Contribution](#contribution)
 
 ## [Installation](#installation)
@@ -280,7 +279,7 @@ let fallbackCM = new ContextMenu(document, [
 
 The `items` array might change during the lifecycle of the page the Context Menu using the array is used on.
 
-The prototype of the options object will be substituted with the other one.
+The prototype of the `options` object will be substituted with the other one.
 
 ### 3. Use public properties of a Context Menu to dinamically add (or remove) `items` and change `options`
 
@@ -295,7 +294,7 @@ After a Context Menu is initialized (the constructor is invoked) you can still m
     }, 10000);
 ```
 
-The example above adds a new item to the `awesomeCM` Context Menu and changes its `transfer` option's property to `false` in 10 seconds after the Context Menu has become initialized.
+The example above adds a new item to the `awesomeCM` Context Menu and changes its `transfer` option's property value to `false` in 10 seconds after the Context Menu has become initialized.
 
 ## [Examples](#examples)
 
@@ -377,12 +376,151 @@ An example of a Context Menu, the second item of which opens a sub-menu, the fir
 
 ## [Styling](#styling)
 
-To be filled later...
+Each Context Menu is represented as a `<div>` with the `data-cm` attribute set to the `name` of the Context Menu. For example if you defined a Context Menu as follows
 
-## [Documentation](#documentation)
+```javascript
+let cm = new ContextMenu(target, items, {
+    name: "fallback"
+});
+```
 
-You can find all the [documentation](#) at this tool's site _(not yet to be honest)_. There you can learn everything from the target elements to the styling and animation.
+then you can easily style it with CSS adressing it by its name
+
+```CSS
+[data-cm="fallback"] {
+    background-color: blue;
+}
+```
+
+Of course you can style different Context Menus separately
+
+```CSS
+[data-cm="fallback"], [data-cm="another-one"] {
+    background-color: blue;
+}
+
+[data-cm="the-third-one"] {
+    background-color: red;
+}
+```
+
+In the example above the Context Menus with `name`s `"fallback"` and `"another-one"` would have blue background, whilst the Context Menu named `"the-third-one"` would have a red one.
+
+If a Context Menu is unnamed then its `data-cm` attribute would be just an empty string, so in order to style such a menu you'd have to refer the `[data-cm]` in your CSS
+
+```CSS
+[data-cm] {
+    background-color: green;
+}
+```
+
+Now all the unnamed Context Menus will have green background.
+
+Referring empty `[data-cm]` attribute is also quite useful it you wish to style all the menus similarly except for a couple ones. For instance let's make all the Context Menus to have yellow backgrounds, while the `"fallback"` one would have a green one.
+
+```CSS
+[data-cm] {
+    background-color: yellow;
+}
+
+[data-cm="fallback"] {
+    background-color: green;
+}
+```
+
+Now you can have hundreds of defferent named Context Menus styled the same and only the Context Menu with the `name` option set to `"fallback"` will have green background.
+
+**Notice**, that you must define styles for `[data-cm]` before you style any other named Context Menu. Otherwise the unnamed menu's styles will override the named one's.
+
+#### Structure
+
+When a Context Menu is opened it appears as the child of its overlay. Overlay is used as a sort of a grouping element and also to simplify the menu closure detection. The overlay is represented by a `<div>` element with `data-cm-overlay` attribute equal to the `name` of the menu and is spawned at the end of the `<body>` whenever the menu is opened.
+
+The menu itself consists of one element usually - the `<ol>`, which stores all the items. However 2 additional elements are added inside the `div[data-cm]` if the Context Menu is overflowed: the "up" and "down" arrow which represented by `<div>` elements with `data-cm-item-special="arrow up"` and `data-cm-item-special="arrow down"` attributes respectively.
+
+Each item of a Context Menu is represented by `<li>` with `data-cm-item` attribute the value of which equals the `title` of the item. Callers do also have `data-cm-item-caller` attribute assigned to them, and the special items get the `data-cm-item-special` equal the type of the special that is used (for example `data-cm-item-special="separator"`).
+
+So the stucture of a Context Menu might be represented as follows
+
+```HTML
+<body>
+    <!-- ... -->
+    <div data-cm-overlay="name">
+        <div data-cm="name">
+            <!-- <div data-cm-item-special="arrow up"></div> - if the menu is overflowed -->
+                <ol>
+                    <li data-cm-item="Title 1">Title 1</li>
+                    <div data-cm-item-special="separator"></div>
+                    <li data-cm-item="Title 2">Title 2</li>
+                </ol>
+            <!-- <div data-cm-item-special="arrow down"></div> - if the menu is overflowed -->
+        </div>
+    </div>
+</body>
+```
+
+All the sub-menus of a Context Menu are stored in the same overlay as the "root's" one.
+
+#### Items
+
+When a mouse hovers an item, or a keyboard is used to navigate to the item then the item gets focused. So in order to highlight the item you must style its `:focuse` state
+
+```CSS
+[data-cm-item] {
+    background-color: white;
+}
+
+[data-cm-item]:focus {
+    background-color: purple;
+}
+```
+
+Now when a user navigates to a certain item the item would become highlighted purple. **Notice**, that browsers usually by default heighlight a focused element with `outline`, so if you wish to disable this behavior then add a `outline: none;` CSS property.
+
+#### Opening and closing transitions
+
+In order to animate the Context Menu opening or closure use CSS transitions
+
+```CSS
+[data-cm] {
+    transition: opacity 1s linear;
+    opacity: 0;
+}
+
+[data-cm].visible {
+    transition: opacity 0.5s linear;
+    opacity: 1;
+}
+```
+
+In the example above menus will smoothely appear in 1 second and hide in 0.5 seconds. The same way you can also animate overlays.
+
+**Very important**: use the same measurement units everywhere. Menus in the following example would behave **incorrect**
+
+```CSS
+[data-cm-overlay] {
+    transition: background-color 2s linear;
+    background-color: rgba(0, 0, 0, 0);
+}
+
+[data-cm-overlay].visible {
+    transition: background-color 900ms linear; // "s" is everywhere else, so don't use "ms" here (or instead use "ms" everywhere)
+    background-color: rgba(0, 0, 0, 0.5);
+}
+
+[data-cm] {
+    transition: opacity 1s linear;
+    opacity: 0;
+}
+
+[data-cm].visible {
+    transition: opacity 0.5s linear;
+    opacity: 1;
+}
+```
+
+Don't mix up seconds and milliseconds. Stick to one thing.
 
 ## [Contribution](#contribution)
 
-I don't currently have any contribution manifest nor styleguides. Nevertheless, I'm open for any kind of contribution you can offer. So don't be shy to open an issue or to make a pull request :sparkles:. Also, you can always contact me if you are unsure about what you can do to make this project better.
+I don't currently have any contribution manifest nor styleguides. Nevertheless, I'm open for any kind of contribution you can offer. So don't be shy to open an issue for everything you might want to know or let me know about or to make a pull request :sparkles:. Also, you can always contact me if you are unsure about what you can do to make this project better.
